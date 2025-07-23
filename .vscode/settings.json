@@ -1,0 +1,9 @@
+{
+  "python.analysis.extraPaths": [
+    "./",
+    "./combos",
+    "./strategy",
+    "./trading",
+    "./trading_api"
+  ]
+}

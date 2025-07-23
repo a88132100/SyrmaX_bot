@@ -1,0 +1,81 @@
+[
+  {
+    "name": "激進策略組合",
+    "description": "追求高報酬，風險較高，適合進取型投資人",
+    "conditions": [
+      {"strategy": "strategy_ema3_ema8_crossover"},
+      {"strategy": "strategy_bollinger_breakout"},
+      {"strategy": "strategy_vwap_deviation"},
+      {"strategy": "strategy_volume_spike"},
+      {"strategy": "strategy_cci_reversal"}
+    ],
+    "is_active": true,
+    "combo_mode": "aggressive",
+    "created_at": "2025-06-27T12:30:12.123196+00:00",
+    "updated_at": "2025-07-02T07:27:48.571636+00:00"
+  },
+  {
+    "name": "平衡策略組合",
+    "description": "風險與報酬平衡，適合大多數用戶",
+    "conditions": [
+      {"strategy": "strategy_rsi_mean_reversion"},
+      {"strategy": "strategy_atr_breakout"},
+      {"strategy": "strategy_ma_channel"},
+      {"strategy": "strategy_volume_trend"},
+      {"strategy": "strategy_cci_mid_trend"}
+    ],
+    "is_active": false,
+    "combo_mode": "balanced",
+    "created_at": "2025-06-27T12:30:12.131977+00:00",
+    "updated_at": "2025-07-02T07:27:48.566537+00:00"
+  },
+  {
+    "name": "保守策略組合",
+    "description": "低風險，適合保守型投資人",
+    "conditions": [
+      {"strategy": "strategy_long_ema_crossover"},
+      {"strategy": "strategy_adx_trend"},
+      {"strategy": "strategy_bollinger_mean_reversion"},
+      {"strategy": "strategy_ichimoku_cloud"},
+      {"strategy": "strategy_atr_mean_reversion"}
+    ],
+    "is_active": false,
+    "combo_mode": "conservative",
+    "created_at": "2025-06-27T12:30:12.139956+00:00",
+    "updated_at": "2025-06-27T12:30:12.139968+00:00"
+  },
+  {
+    "name": "自動判斷組合",
+    "description": "系統自動根據 ATR 波動度自動切換最佳模式",
+    "conditions": [
+      {
+        "indicator": "ATR",
+        "period": 14,
+        "thresholds": {
+          "high": 100,
+          "medium": 50
+        },
+        "mapping": {
+          "high": "aggressive",
+          "medium": "balanced",
+          "low": "conservative"
+        }
+      }
+    ],
+    "is_active": false,
+    "combo_mode": "auto",
+    "created_at": "2025-06-27T12:30:12.148078+00:00",
+    "updated_at": "2025-06-27T12:30:12.148090+00:00"
+  },
+  {
+    "name": "自定義組合",
+    "description": "用戶可自定義條件，靈活調整策略",
+    "conditions": [
+      {"type": "example", "value": 1}
+    ],
+    "is_active": false,
+    "combo_mode": "custom",
+    "created_at": "2025-06-27T12:30:12.155787+00:00",
+    "updated_at": "2025-06-27T12:30:12.155801+00:00"
+  }
+]
