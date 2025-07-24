@@ -39,8 +39,8 @@ class CCXTClient(ExchangeClient):
 
     def get_price(self, symbol: str) -> float:
         try:
-        ticker = self.exchange.fetch_ticker(symbol)
-        return float(ticker['last'])
+            ticker = self.exchange.fetch_ticker(symbol)
+            return float(ticker['last'])
         except ccxt.NetworkError as e:
             logging.error(f"擷取 {symbol} 價格時發生網路錯誤: {e}")
             raise
@@ -53,32 +53,33 @@ class CCXTClient(ExchangeClient):
 
     def fetch_klines(self, symbol: str, interval: str, limit: int = 500) -> List[Any]:
         try:
-        return self.exchange.fetch_ohlcv(symbol, timeframe=interval, limit=limit)
+            return self.exchange.fetch_ohlcv(symbol, timeframe=interval, limit=limit)
         except Exception as e:
             logging.error(f"擷取 {symbol} K線時發生錯誤: {e}")
             return []
 
-    def place_order(self, symbol: str, side: str, quantity: float, type: str = "market", params={}) -> dict:
+    def place_order(self, symbol: str, side: str, quantity: float, type: str = "market", params=None) -> dict:
+        params = params or {}
         try:
-        if type.lower() == "market":
+            if type.lower() == "market":
                 return self.exchange.create_market_order(symbol, side.lower(), quantity, params=params)
-        elif type.lower() == "limit":
+            elif type.lower() == "limit":
                 # 假設需要 price 參數
                 price = params.get('price')
                 if not price:
                     raise ValueError("限價單需要 'price' 參數")
                 return self.exchange.create_limit_order(symbol, side.lower(), quantity, price, params=params)
-        else:
-            raise ValueError(f"不支援的訂單類型: {type}")
+            else:
+                raise ValueError(f"不支援的訂單類型: {type}")
         except Exception as e:
             logging.error(f"下單失敗 (symbol={symbol}, side={side}, qty={quantity}): {e}")
             raise
 
     def cancel_all_orders(self, symbol: str):
         try:
-        if self.exchange.has.get("cancelAllOrders"):
+            if self.exchange.has("cancelAllOrders"):
                 return self.exchange.cancel_all_orders(symbol)
-        else:
+            else:
                 logging.warning(f"交易所 {self.exchange.id} 不支援 cancel_all_orders")
                 return None
         except Exception as e:
