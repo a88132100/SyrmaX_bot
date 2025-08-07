@@ -29,7 +29,8 @@ class Command(BaseCommand):
             {'key': 'LEVERAGE', 'value': '10', 'value_type': 'int', 'description': '所有交易對的統一槓桿倍數'},
             {'key': 'GLOBAL_INTERVAL_SECONDS', 'value': '3', 'value_type': 'int', 'description': '每次交易循環的間隔秒數'},
             {'key': 'TEST_MODE', 'value': 'False', 'value_type': 'bool', 'description': '是否啟用模擬交易模式 (不會真實下單)'},
-
+            # 是否啟用交易次數限制
+            {'key': 'ENABLE_TRADE_LIMITS', 'value': 'True', 'value_type': 'bool', 'description': '是否啟用每小時/每日開倉次數限制'},
             # --- 風險控制參數 ---
             {'key': 'MAX_DAILY_LOSS_PCT', 'value': '0.25', 'value_type': 'float', 'description': '每日最大虧損百分比 (例如 0.25 代表 25%)'},
             {'key': 'RISK_PER_TRADE_PCT', 'value': '0.02', 'value_type': 'float', 'description': '單筆交易的風險百分比 (例如 0.02 代表 2%)'},

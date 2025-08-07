@@ -8,7 +8,7 @@ from typing import List, Any
 class CCXTClient(ExchangeClient):
     def __init__(self, exchange_name: str, api_key: str, api_secret: str, testnet: bool):
         if not api_key or not api_secret:
-            raise ValueError("❌ API_KEY 或 API_SECRET 未正確設置，請檢查 config.py 或環境變數！")
+            raise ValueError("❌ API_KEY 或 API_SECRET 未正確設置，請檢查環境變數或資料庫配置！")
 
         exchange_class = getattr(ccxt, exchange_name.lower(), None)
         if not exchange_class:

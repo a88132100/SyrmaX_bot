@@ -160,6 +160,9 @@ class MultiSymbolTrader:
         # 初始化 MultiSymbolTrader 的模擬模式狀態 (從數據庫讀取)
         self.test_mode = self.get_config('TEST_MODE', type=bool, default=False)
 
+        # 交易次數限制開關，預設為啟用
+        self.enable_trade_limits = self.get_config('ENABLE_TRADE_LIMITS', type=bool, default=True)
+
         # 從數據庫讀取交易對和槓桿
         self.symbols = self.get_config('SYMBOLS', type=list, default=[])
         self.leverage = self.get_config('LEVERAGE', type=int, default=10)
@@ -188,6 +191,11 @@ class MultiSymbolTrader:
        
         # 全局交易判斷頻率
         self.global_interval_seconds = self.get_config('GLOBAL_INTERVAL_SECONDS', type=int, default=3)
+
+        # 每小時與每日允許的最大開倉次數
+        self.max_trades_per_hour = self.get_config('MAX_TRADES_PER_HOUR', type=int, default=5)
+        self.max_trades_per_day = self.get_config('MAX_TRADES_PER_DAY', type=int, default=100)
+
 
         # 初始化每日風控統計
         self.daily_stats = {
@@ -272,6 +280,9 @@ class MultiSymbolTrader:
             self.trading_enabled = trader_status.is_trading_enabled
             self.stop_signal = trader_status.stop_signal_received
             self.last_daily_reset_date = trader_status.last_daily_reset_date
+            self.hourly_trade_count = trader_status.hourly_trade_count
+            self.daily_trade_count = trader_status.daily_trade_count
+            self.last_hourly_reset = trader_status.last_hourly_reset
         except Exception as e:
             logging.error(f"從數據庫載入 TraderStatus 失敗: {e}，將使用預設狀態。")
 
@@ -720,6 +731,16 @@ class MultiSymbolTrader:
         """
         trader_status = TraderStatus.objects.get(pk=1) # 獲取交易器狀態
 
+        # 每小時重置交易計數
+        now_dt = timezone.now()
+        if now_dt - trader_status.last_hourly_reset >= timedelta(hours=1):
+            trader_status.hourly_trade_count = 0
+            trader_status.last_hourly_reset = now_dt
+            trader_status.save()
+            self.hourly_trade_count = 0
+            self.last_hourly_reset = now_dt
+            logging.info("每小時交易計數已重置")
+
         # 每日 0 點重新初始化資金與統計
         now = timezone.localdate()
         if trader_status.last_daily_reset_date != now:
@@ -739,6 +760,13 @@ class MultiSymbolTrader:
         for trading_pair_obj in TradingPair.objects.all():
             symbol = trading_pair_obj.symbol
             interval = trading_pair_obj.interval # K線週期
+
+            # 若啟用交易次數限制，檢查是否達到每小時或每日開倉上限
+            if self.enable_trade_limits:
+                if (trader_status.hourly_trade_count >= self.max_trades_per_hour or
+                    trader_status.daily_trade_count >= self.max_trades_per_day):
+                    logging.info("已達全局開倉次數上限，跳過開倉。")
+                    continue
             
             try:
                 # ⏱️ 根據設定跳過過快頻率
@@ -793,6 +821,10 @@ class MultiSymbolTrader:
                     pass
                 else:
                     # 沒有持倉，生成開倉信號
+                    if (trader_status.hourly_trade_count >= self.max_trades_per_hour or
+                        trader_status.daily_trade_count >= self.max_trades_per_day):
+                        logging.info("已達全局開倉次數上限，跳過開倉。")
+                        continue
                     signal = self.generate_signal(df) # 這裡使用 generate_signal，它會根據組合模式來執行
                     if signal == 0:
                         continue
@@ -810,6 +842,11 @@ class MultiSymbolTrader:
 
                     side = SIDE_BUY if signal == 1 else SIDE_SELL
                     self.place_order(symbol, side, final_qty)
+                    trader_status.hourly_trade_count += 1
+                    trader_status.daily_trade_count += 1
+                    trader_status.save()
+                    self.hourly_trade_count = trader_status.hourly_trade_count
+                    self.daily_trade_count = trader_status.daily_trade_count
 
             except Exception as e:
                 logging.error(f"{symbol} 在交易週期中發生錯誤：{e}")
@@ -850,8 +887,15 @@ class MultiSymbolTrader:
             trader_status = TraderStatus.objects.get(pk=1)
             trader_status.is_trading_enabled = True
             trader_status.last_daily_reset_date = timezone.localdate()
+            trader_status.daily_trade_count = 0
+            trader_status.hourly_trade_count = 0
+            trader_status.last_hourly_reset = timezone.now()
             trader_status.save()
             logging.info("交易開關已恢復為 True，每日重置日期已更新。")
+            self.daily_trade_count = 0
+            self.hourly_trade_count = 0
+            self.last_hourly_reset = trader_status.last_hourly_reset
+
 
     def reset_daily_stats(self):
         """

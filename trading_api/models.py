@@ -91,6 +91,9 @@ class TraderStatus(models.Model):
     is_trading_enabled = models.BooleanField(default=True, verbose_name="交易是否啟用")
     stop_signal_received = models.BooleanField(default=False, verbose_name="是否收到停止信號")
     last_daily_reset_date = models.DateField(default=timezone.localdate, verbose_name="上次每日重置日期")
+    hourly_trade_count = models.IntegerField(default=0, verbose_name="本小時開倉次數")
+    daily_trade_count = models.IntegerField(default=0, verbose_name="本日開倉次數")
+    last_hourly_reset = models.DateTimeField(default=timezone.now, verbose_name="上次小時重置時間")
 
     class Meta:
         verbose_name = "交易員狀態"

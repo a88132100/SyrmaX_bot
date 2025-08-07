@@ -1,0 +1,34 @@
+# SyrmaX 高頻自動加密貨幣交易系統依賴套件
+# 核心框架
+Django==5.2.2
+djangorestframework==3.14.0
+
+# 交易所 API 客戶端
+python-binance==1.0.19
+pybit==5.7.0
+okx==0.8.0
+ccxt==4.1.77
+
+# 技術分析
+pandas==2.1.4
+numpy==1.24.3
+TA-Lib==0.4.28
+
+# 資料處理與工具
+python-dateutil==2.8.2
+pytz==2023.3
+
+# 日誌與監控
+python-json-logger==2.0.7
+
+# 開發工具（可選）
+django-debug-toolbar==4.2.0
+django-extensions==3.2.3
+
+# 測試工具（可選）
+pytest==7.4.3
+pytest-django==4.7.0
+
+# 生產環境（可選）
+gunicorn==21.2.0
+whitenoise==6.6.0
