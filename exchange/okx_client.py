@@ -2,10 +2,15 @@
 # OKX 合約 API 封裝，需安裝 okx 套件
 # pip install okx
 
-import okx.Account as Account
-import okx.Trade as Trade
-import okx.MarketData as MarketData
-import okx.PublicData as PublicData
+try:
+    from okx.api import Account, Trade, Market, Public
+except ImportError:
+    # 如果okx模組不可用，使用備用方案
+    Account = None
+    Trade = None
+    Market = None
+    Public = None
+
 from exchange.base import ExchangeClient
 import logging
 from typing import List, Any
@@ -26,28 +31,24 @@ class OKXClient(ExchangeClient):
         self.passphrase = passphrase
         
         # 設定測試網或主網
-        self.flag = "0" if testnet else "0"  # OKX 使用 flag 參數，0=實盤，1=模擬盤
+        self.flag = "1" if testnet else "0"  # OKX 使用 flag 參數，0=實盤，1=模擬盤
         
         # 初始化各個 API 模組
-        self.account_api = Account.AccountAPI(
+        self.account_api = Account(
             api_key, api_secret, passphrase, 
-            flag=self.flag, 
-            sandbox=testnet
+            flag=self.flag
         )
-        self.trade_api = Trade.TradeAPI(
+        self.trade_api = Trade(
             api_key, api_secret, passphrase, 
-            flag=self.flag, 
-            sandbox=testnet
+            flag=self.flag
         )
-        self.market_api = MarketData.MarketAPI(
+        self.market_api = Market(
             api_key, api_secret, passphrase, 
-            flag=self.flag, 
-            sandbox=testnet
+            flag=self.flag
         )
-        self.public_api = PublicData.PublicAPI(
+        self.public_api = Public(
             api_key, api_secret, passphrase, 
-            flag=self.flag, 
-            sandbox=testnet
+            flag=self.flag
         )
         
         logging.info(f"✅ OKXClient 已初始化，testnet={testnet}")

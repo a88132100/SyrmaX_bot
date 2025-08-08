@@ -12,21 +12,21 @@ from dataclasses import dataclass
 from typing import List, Dict, Any, Callable, Iterable
 import logging
 # ---- 匯入子策略 -----------------------------------------------------------
-from aggressive import (
+from .aggressive import (
     strategy_ema3_ema8_crossover,
     strategy_bollinger_breakout,
     strategy_vwap_deviation,
     strategy_volume_spike,
     strategy_cci_reversal,
 )
-from balanced import (
+from .balanced import (
     strategy_rsi_mean_reversion,
     strategy_atr_breakout,
     strategy_ma_channel,
     strategy_volume_trend,
     strategy_cci_mid_trend,
 )
-from conservative import (
+from .conservative import (
     strategy_long_ema_crossover,
     strategy_adx_trend,
     strategy_bollinger_mean_reversion,

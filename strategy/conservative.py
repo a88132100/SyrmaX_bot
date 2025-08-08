@@ -176,40 +176,79 @@ def _precalc(df: pd.DataFrame, cfg: Dict[str, Any]):
 
 # ──────────────────── 6. 核心執行入口 ────────────────────
 def run(df: pd.DataFrame, user_cfg: Dict[str, Any] | None = None) -> List[Signal]:
-    """
-    入口函式：
-    1. 先合併外部設定並計算指標
-    2. 逐支策略產生原始 Signal
-    3. 以 C5(ATR_Extreme) 為超級濾網，避免追高殺低
-    """
+    """執行保守策略組合"""
     cfg = default_config()
     if user_cfg:
         cfg.update(user_cfg)
-
-    _precalc(df, cfg)
-    atr_val = df["atr"].iloc[-1]
-
+    
+    # 預計算 ATR
+    atr = talib.ATR(df["high"], df["low"], df["close"], timeperiod=cfg["atr_period"]).iloc[-1]
+    
     strategies = [
-        EMA_Cross("C1_EMA_Cross", cfg, atr_val),
-        ADX_Trend("C2_ADX_Trend", cfg, atr_val),
-        BB_MeanRev("C3_BB_MeanRev", cfg, atr_val),
-        Ichimoku_Cloud("C4_Ichimoku_Cloud", cfg, atr_val),
-        ATR_Extreme("C5_ATR_Extreme", cfg, atr_val),   # 濾網 + 末端反轉
+        EMA_Cross("C1", cfg, atr),
+        ADX_Trend("C2", cfg, atr),
+        BB_MeanRev("C3", cfg, atr),
+        Ichimoku_Cloud("C4", cfg, atr),
+        ATR_Extreme("C5", cfg, atr),
     ]
+    
+    all_signals = []
+    for strategy in strategies:
+        signals = strategy.generate(df)
+        all_signals.extend(signals)
+    
+    return all_signals
 
-    raw: List[Signal] = []
-    for st in strategies:
-        raw.extend(st.generate(df))
+# 為了兼容base.py的導入，添加這些函數
+def strategy_long_ema_crossover(df: pd.DataFrame) -> int:
+    """長期EMA交叉策略"""
+    cfg = default_config()
+    atr = talib.ATR(df["high"], df["low"], df["close"], timeperiod=cfg["atr_period"]).iloc[-1]
+    strategy = EMA_Cross("C1", cfg, atr)
+    signals = strategy.generate(df)
+    if signals:
+        return signals[0].side
+    return 0
 
-    # 濾掉 C5 標記為 extreme 的方向（若存在則以它為主）
-    extremes = [s for s in raw if s.source == "C5_ATR_Extreme"]
-    if extremes:
-        # 若出現極端反轉訊號，僅保留其方向
-        return extremes[:1]
+def strategy_adx_trend(df: pd.DataFrame) -> int:
+    """ADX趨勢策略"""
+    cfg = default_config()
+    atr = talib.ATR(df["high"], df["low"], df["close"], timeperiod=cfg["atr_period"]).iloc[-1]
+    strategy = ADX_Trend("C2", cfg, atr)
+    signals = strategy.generate(df)
+    if signals:
+        return signals[0].side
+    return 0
 
-    # 若沒有 extreme 濾網，就回傳第一支符合的保守訊號（頻率極低）
-    tradable = [s for s in raw if s.source != "C5_ATR_Extreme"]
-    return tradable[:1]
+def strategy_bollinger_mean_reversion(df: pd.DataFrame) -> int:
+    """布林帶均值回歸策略"""
+    cfg = default_config()
+    atr = talib.ATR(df["high"], df["low"], df["close"], timeperiod=cfg["atr_period"]).iloc[-1]
+    strategy = BB_MeanRev("C3", cfg, atr)
+    signals = strategy.generate(df)
+    if signals:
+        return signals[0].side
+    return 0
+
+def strategy_ichimoku_cloud(df: pd.DataFrame) -> int:
+    """一目均衡表雲層策略"""
+    cfg = default_config()
+    atr = talib.ATR(df["high"], df["low"], df["close"], timeperiod=cfg["atr_period"]).iloc[-1]
+    strategy = Ichimoku_Cloud("C4", cfg, atr)
+    signals = strategy.generate(df)
+    if signals:
+        return signals[0].side
+    return 0
+
+def strategy_atr_mean_reversion(df: pd.DataFrame) -> int:
+    """ATR均值回歸策略"""
+    cfg = default_config()
+    atr = talib.ATR(df["high"], df["low"], df["close"], timeperiod=cfg["atr_period"]).iloc[-1]
+    strategy = ATR_Extreme("C5", cfg, atr)
+    signals = strategy.generate(df)
+    if signals:
+        return signals[0].side
+    return 0
 
 
 # ──────────────────── 7. CLI 測試（自行測試用，可刪除） ────────────────────

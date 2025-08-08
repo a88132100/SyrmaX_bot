@@ -163,23 +163,76 @@ def _precalc(df: pd.DataFrame, cfg: Dict[str, Any]):
 # ------------------------------ 核心 run 入口 -----------------------------
 
 def run(df: pd.DataFrame, user_cfg: Dict[str, Any] = None) -> List[Signal]:
+    """執行平衡策略組合"""
     cfg = default_config()
     if user_cfg:
         cfg.update(user_cfg)
-    _precalc(df, cfg)
-    atr_val = df["atr"].iloc[-1]
+    
+    # 預計算 ATR
+    atr = talib.ATR(df["high"], df["low"], df["close"], timeperiod=cfg["risk_atr_period"]).iloc[-1]
+    
     strategies = [
-        RSIMeanReversion("B1", cfg, atr_val),
-        ATRBreakout("B2", cfg, atr_val),
-        MAChannel("B3", cfg, atr_val),
-        VolumeTrend("B4", cfg, atr_val),
-        CCITrendFilter("B5", cfg, atr_val),
+        RSIMeanReversion("B1", cfg, atr),
+        ATRBreakout("B2", cfg, atr),
+        MAChannel("B3", cfg, atr),
+        VolumeTrend("B4", cfg, atr),
+        CCITrendFilter("B5", cfg, atr),
     ]
-    sigs: List[Signal] = []
-    for s in strategies:
-        sigs.extend(s.generate(df))
-    filt = {s.side for s in sigs if next(x for x in strategies if x.name == s.source).filter_only}
-    trad = [s for s in sigs if not next(x for x in strategies if x.name == s.source).filter_only]
-    if filt:
-        trad = [s for s in trad if s.side in filt]
-    return trad[:1]
+    
+    all_signals = []
+    for strategy in strategies:
+        signals = strategy.generate(df)
+        all_signals.extend(signals)
+    
+    return all_signals
+
+# 為了兼容base.py的導入，添加這些函數
+def strategy_rsi_mean_reversion(df: pd.DataFrame) -> int:
+    """RSI 均值回歸策略"""
+    cfg = default_config()
+    atr = talib.ATR(df["high"], df["low"], df["close"], timeperiod=cfg["risk_atr_period"]).iloc[-1]
+    strategy = RSIMeanReversion("B1", cfg, atr)
+    signals = strategy.generate(df)
+    if signals:
+        return signals[0].side
+    return 0
+
+def strategy_atr_breakout(df: pd.DataFrame) -> int:
+    """ATR 突破策略"""
+    cfg = default_config()
+    atr = talib.ATR(df["high"], df["low"], df["close"], timeperiod=cfg["risk_atr_period"]).iloc[-1]
+    strategy = ATRBreakout("B2", cfg, atr)
+    signals = strategy.generate(df)
+    if signals:
+        return signals[0].side
+    return 0
+
+def strategy_ma_channel(df: pd.DataFrame) -> int:
+    """MA 通道策略"""
+    cfg = default_config()
+    atr = talib.ATR(df["high"], df["low"], df["close"], timeperiod=cfg["risk_atr_period"]).iloc[-1]
+    strategy = MAChannel("B3", cfg, atr)
+    signals = strategy.generate(df)
+    if signals:
+        return signals[0].side
+    return 0
+
+def strategy_volume_trend(df: pd.DataFrame) -> int:
+    """成交量趨勢策略"""
+    cfg = default_config()
+    atr = talib.ATR(df["high"], df["low"], df["close"], timeperiod=cfg["risk_atr_period"]).iloc[-1]
+    strategy = VolumeTrend("B4", cfg, atr)
+    signals = strategy.generate(df)
+    if signals:
+        return signals[0].side
+    return 0
+
+def strategy_cci_mid_trend(df: pd.DataFrame) -> int:
+    """CCI 中線趨勢策略"""
+    cfg = default_config()
+    atr = talib.ATR(df["high"], df["low"], df["close"], timeperiod=cfg["risk_atr_period"]).iloc[-1]
+    strategy = CCITrendFilter("B5", cfg, atr)
+    signals = strategy.generate(df)
+    if signals:
+        return signals[0].side
+    return 0

@@ -215,42 +215,73 @@ def calc_atr_sl_tp(df: pd.DataFrame, side: int, cfg: Dict[str, Any]):
 ###############################################################################
 
 def run(df: pd.DataFrame, user_config: Dict[str, Any] = None) -> List[Signal]:
-    """執行激進策略組，回傳一組 Signal (可能為空)。"""
-
-    # 1. 整合設定
+    """
+    執行激進策略組合
+    """
     cfg = default_config()
     if user_config:
         cfg.update(user_config)
-
-    # 2. 建立策略實例 (順序即優先序)
-    strategies: List[BaseStrategy] = [
-        EMACrossover("A1_EMA_Cross", cfg),
-        BollingerBreakout("A2_BB_Break", cfg),
-        VWAPMomentum("A3_VWAP_Momo", cfg),
-        VolumeSpikeBreakout("A4_Volume", cfg),
-        CCITrendFilter("A5_CCI_Filter", cfg),
+    
+    strategies = [
+        EMACrossover("A1", cfg),
+        BollingerBreakout("A2", cfg),
+        VWAPMomentum("A3", cfg),
+        VolumeSpikeBreakout("A4", cfg),
+        CCITrendFilter("A5", cfg),
     ]
+    
+    all_signals = []
+    for strategy in strategies:
+        signals = strategy.generate_signal(df)
+        all_signals.extend(signals)
+    
+    return all_signals
 
-    # 3. 先收集所有訊號
-    raw_signals: List[Signal] = []
-    for st in strategies:
-        raw_signals.extend(st.generate_signal(df))
+# 為了兼容base.py的導入，添加這些函數
+def strategy_ema3_ema8_crossover(df: pd.DataFrame) -> int:
+    """EMA 3/8 交叉策略"""
+    cfg = default_config()
+    strategy = EMACrossover("A1", cfg)
+    signals = strategy.generate_signal(df)
+    if signals:
+        return signals[0].side
+    return 0
 
-    if not raw_signals:
-        return []
+def strategy_bollinger_breakout(df: pd.DataFrame) -> int:
+    """布林帶突破策略"""
+    cfg = default_config()
+    strategy = BollingerBreakout("A2", cfg)
+    signals = strategy.generate_signal(df)
+    if signals:
+        return signals[0].side
+    return 0
 
-    # 4. 使用 CCI 濾網 (若存在) 過濾方向衝突
-    cci_filters = [s for s in raw_signals if s.source.startswith("A5")]
-    tradable = [s for s in raw_signals if not s.source.startswith("A5")]
+def strategy_vwap_deviation(df: pd.DataFrame) -> int:
+    """VWAP 偏離策略"""
+    cfg = default_config()
+    strategy = VWAPMomentum("A3", cfg)
+    signals = strategy.generate_signal(df)
+    if signals:
+        return signals[0].side
+    return 0
 
-    if cci_filters:
-        allowed_sides = {f.side for f in cci_filters}
-        tradable = [s for s in tradable if s.side in allowed_sides]
+def strategy_volume_spike(df: pd.DataFrame) -> int:
+    """量能爆量策略"""
+    cfg = default_config()
+    strategy = VolumeSpikeBreakout("A4", cfg)
+    signals = strategy.generate_signal(df)
+    if signals:
+        return signals[0].side
+    return 0
 
-    # 5. 若多策略同向，取 "最早觸發" (此處以列表順序判斷)
-    if tradable:
-        return [tradable[0]]
-    return []
+def strategy_cci_reversal(df: pd.DataFrame) -> int:
+    """CCI 反轉策略"""
+    cfg = default_config()
+    strategy = CCITrendFilter("A5", cfg)
+    signals = strategy.generate_signal(df)
+    if signals:
+        return signals[0].side
+    return 0
 
 ###############################################################################
 # CLI 測試 (開發用，可刪除)

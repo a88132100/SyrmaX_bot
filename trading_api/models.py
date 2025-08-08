@@ -100,7 +100,27 @@ class TraderStatus(models.Model):
         verbose_name_plural = "交易員狀態"
 
     def __str__(self):
-        return f"交易啟用: {self.is_trading_enabled}, 停止信號: {self.stop_signal_received}"
+        return f"交易員狀態 - 交易啟用: {self.is_trading_enabled}, 小時計數: {self.hourly_trade_count}, 日計數: {self.daily_trade_count}"
+
+class VolatilityPauseStatus(models.Model):
+    """
+    波動率暫停狀態模型
+    用於記錄每個交易對的波動率暫停狀態
+    """
+    trading_pair = models.OneToOneField(TradingPair, on_delete=models.CASCADE, primary_key=True, verbose_name="交易對")
+    is_paused = models.BooleanField(default=False, verbose_name="是否因波動率暫停")
+    pause_start_time = models.DateTimeField(null=True, blank=True, verbose_name="暫停開始時間")
+    pause_reason = models.CharField(max_length=255, blank=True, null=True, verbose_name="暫停原因")
+    current_atr_ratio = models.FloatField(default=1.0, verbose_name="當前ATR比率")
+    last_updated = models.DateTimeField(auto_now=True, verbose_name="最後更新時間")
+
+    class Meta:
+        verbose_name = "波動率暫停狀態"
+        verbose_name_plural = "波動率暫停狀態"
+
+    def __str__(self):
+        status = "暫停中" if self.is_paused else "正常"
+        return f"{self.trading_pair.symbol} - {status} (ATR比率: {self.current_atr_ratio:.2f})"
 
 # 新增組合包模式選項 (現在定義在這裡，供 StrategyCombo 使用)
 COMBO_MODE_CHOICES = [

@@ -31,9 +31,16 @@ class Command(BaseCommand):
             {'key': 'TEST_MODE', 'value': 'False', 'value_type': 'bool', 'description': '是否啟用模擬交易模式 (不會真實下單)'},
             # 是否啟用交易次數限制
             {'key': 'ENABLE_TRADE_LIMITS', 'value': 'True', 'value_type': 'bool', 'description': '是否啟用每小時/每日開倉次數限制'},
-            # --- 風險控制參數 ---
-            {'key': 'MAX_DAILY_LOSS_PCT', 'value': '0.25', 'value_type': 'float', 'description': '每日最大虧損百分比 (例如 0.25 代表 25%)'},
-            {'key': 'RISK_PER_TRADE_PCT', 'value': '0.02', 'value_type': 'float', 'description': '單筆交易的風險百分比 (例如 0.02 代表 2%)'},
+            {'key': 'MAX_TRADES_PER_HOUR', 'value': '10', 'value_type': 'int', 'description': '每小時最大開倉次數'},
+            {'key': 'MAX_TRADES_PER_DAY', 'value': '50', 'value_type': 'int', 'description': '每日最大開倉次數'},
+            {'key': 'MAX_DAILY_LOSS_PERCENT', 'value': '25.0', 'value_type': 'float', 'description': '每日最大虧損百分比'},
+            
+            # 波動率風險調整配置
+            {'key': 'ENABLE_VOLATILITY_RISK_ADJUSTMENT', 'value': 'True', 'value_type': 'bool', 'description': '是否啟用基於波動率的風險調整'},
+            {'key': 'VOLATILITY_THRESHOLD_MULTIPLIER', 'value': '2.0', 'value_type': 'float', 'description': '波動率閾值倍數（用於倉位調整）'},
+            {'key': 'VOLATILITY_PAUSE_THRESHOLD', 'value': '3.0', 'value_type': 'float', 'description': '波動率暫停閾值（ATR比率超過此值時暫停交易）'},
+            {'key': 'VOLATILITY_RECOVERY_THRESHOLD', 'value': '1.5', 'value_type': 'float', 'description': '波動率恢復閾值（ATR比率低於此值時恢復交易）'},
+            {'key': 'VOLATILITY_PAUSE_DURATION_MINUTES', 'value': '30', 'value_type': 'int', 'description': '波動率暫停持續時間（分鐘）'},
             
             # --- 策略相關參數 ---
             {'key': 'SYMBOL_INTERVALS', 'value': json.dumps({'BTC/USDT': '1m', 'ETH/USDT': '1m'}), 'value_type': 'dict', 'description': '每個交易對使用的 K 線時間週期 (JSON 格式)'},

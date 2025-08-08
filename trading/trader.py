@@ -13,12 +13,12 @@ import ccxt
 from binance.error import ClientError
 from datetime import datetime, timedelta
 from exchange.load_exchange_client import load_exchange_client
-from trading.constants import SIDE_BUY, SIDE_SELL, symbol_precision
+from trading.constants import SIDE_BUY, SIDE_SELL, SYMBOL_PRECISION
 from strategy.base import evaluate_bundles, strategy_bundles
 from trading.utils import get_precision
 from django.utils import timezone
 from django.db import transaction
-from trading_api.models import TradingPair, DailyStats, TraderStatus, Position, StrategyCombo, COMBO_MODE_CHOICES, TraderConfig
+from trading_api.models import TradingPair, DailyStats, TraderStatus, Position, StrategyCombo, COMBO_MODE_CHOICES, TraderConfig, VolatilityPauseStatus
 from trading_api.admin import CONFIG_FIELD_TYPES
 
 # 導入所有單一策略函數
@@ -196,6 +196,22 @@ class MultiSymbolTrader:
         self.max_trades_per_hour = self.get_config('MAX_TRADES_PER_HOUR', type=int, default=5)
         self.max_trades_per_day = self.get_config('MAX_TRADES_PER_DAY', type=int, default=100)
 
+        # 波動率風險調整配置
+        self.enable_volatility_risk_adjustment = self.get_config('ENABLE_VOLATILITY_RISK_ADJUSTMENT', type=bool, default=True)
+        self.volatility_threshold_multiplier = self.get_config('VOLATILITY_THRESHOLD_MULTIPLIER', type=float, default=2.0)
+        self.volatility_pause_threshold = self.get_config('VOLATILITY_PAUSE_THRESHOLD', type=float, default=3.0)
+        self.volatility_recovery_threshold = self.get_config('VOLATILITY_RECOVERY_THRESHOLD', type=float, default=1.5)
+        self.volatility_pause_duration_minutes = self.get_config('VOLATILITY_PAUSE_DURATION_MINUTES', type=int, default=30)
+        
+        # 波動率暫停狀態
+        self.volatility_pause_status = {}
+        for symbol in self.symbols:
+            self.volatility_pause_status[symbol] = {
+                'is_paused': False,
+                'pause_start_time': None,
+                'pause_reason': None,
+                'current_atr_ratio': 1.0
+            }
 
         # 初始化每日風控統計
         self.daily_stats = {
@@ -803,6 +819,11 @@ class MultiSymbolTrader:
                 if not all(col in df.columns and not df[col].isna().all() for col in required):
                     continue
 
+                # 檢查波動率風險調整
+                if not self.check_volatility_risk_adjustment(symbol, df):
+                    logging.info(f"{symbol}: 因波動率異常暫停交易")
+                    continue
+
                 # 檢查是否應該平倉 (包括止盈止損)
                 self.check_exit_conditions(symbol)
 
@@ -834,7 +855,11 @@ class MultiSymbolTrader:
                         logging.warning(f"{symbol} 無法獲取當前價格，跳過本次下單。")
                         continue
 
-                    final_qty = self.calculate_position_size(symbol, price, df)
+                    # 計算基礎倉位大小
+                    base_qty = self.calculate_position_size(symbol, price, df)
+                    
+                    # 根據波動率調整倉位大小
+                    final_qty = self.adjust_position_size_by_volatility(symbol, base_qty, df)
 
                     if final_qty <= 0:
                         logging.info(f"{symbol} 計算出的下單量為零或負數 ({final_qty})，跳過下單。")
@@ -1151,3 +1176,144 @@ class MultiSymbolTrader:
             # 捕獲並記錄計算歷史平均 ATR 過程中的錯誤
             logging.error(f"{symbol}: 計算歷史平均 ATR 時發生錯誤: {e}")
             return None
+
+    def check_volatility_risk_adjustment(self, symbol: str, df: pd.DataFrame) -> bool:
+        """
+        檢查波動率風險並進行調整
+        
+        參數：
+            symbol (str): 交易對符號
+            df (pd.DataFrame): 包含ATR數據的DataFrame
+            
+        回傳：
+            bool: True表示可以正常交易，False表示因波動率異常而暫停交易
+        """
+        if not self.enable_volatility_risk_adjustment:
+            return True
+            
+        # 獲取歷史平均ATR
+        avg_atr = self.average_atrs.get(symbol)
+        if avg_atr is None or avg_atr < 1e-9:
+            logging.warning(f"{symbol}: 無法獲取有效的歷史平均ATR，跳過波動率檢查")
+            return True
+            
+        # 獲取當前ATR
+        if 'atr' not in df.columns or df['atr'].empty:
+            logging.warning(f"{symbol}: 無法獲取當前ATR數據，跳過波動率檢查")
+            return True
+            
+        current_atr = df['atr'].iloc[-1]
+        if current_atr is None or pd.isna(current_atr):
+            logging.warning(f"{symbol}: 當前ATR數據無效，跳過波動率檢查")
+            return True
+            
+        # 計算ATR比率
+        atr_ratio = current_atr / avg_atr
+        
+        # 獲取或創建波動率暫停狀態記錄
+        try:
+            trading_pair_obj = TradingPair.objects.get(symbol=symbol)
+            volatility_status, created = VolatilityPauseStatus.objects.get_or_create(
+                trading_pair=trading_pair_obj,
+                defaults={
+                    'is_paused': False,
+                    'current_atr_ratio': atr_ratio
+                }
+            )
+            
+            # 更新當前ATR比率
+            volatility_status.current_atr_ratio = atr_ratio
+            volatility_status.save()
+            
+        except Exception as e:
+            logging.error(f"{symbol}: 無法獲取波動率暫停狀態: {e}")
+            return True
+        
+        # 檢查是否應該暫停交易
+        if atr_ratio >= self.volatility_pause_threshold:
+            if not volatility_status.is_paused:
+                # 開始暫停交易
+                volatility_status.is_paused = True
+                volatility_status.pause_start_time = timezone.now()
+                volatility_status.pause_reason = f"波動率異常放大 (ATR比率: {atr_ratio:.2f})"
+                volatility_status.save()
+                logging.warning(f"{symbol}: 波動率異常放大，ATR比率為 {atr_ratio:.2f}，暫停交易")
+            return False
+            
+        # 檢查是否可以恢復交易
+        elif atr_ratio <= self.volatility_recovery_threshold:
+            if volatility_status.is_paused:
+                # 檢查是否達到最小暫停時間
+                pause_start = volatility_status.pause_start_time
+                if pause_start and (timezone.now() - pause_start).total_seconds() >= self.volatility_pause_duration_minutes * 60:
+                    # 恢復交易
+                    volatility_status.is_paused = False
+                    volatility_status.pause_start_time = None
+                    volatility_status.pause_reason = None
+                    volatility_status.save()
+                    logging.info(f"{symbol}: 波動率已恢復正常，ATR比率為 {atr_ratio:.2f}，恢復交易")
+                else:
+                    # 還在最小暫停時間內
+                    remaining_time = self.volatility_pause_duration_minutes * 60 - (timezone.now() - pause_start).total_seconds()
+                    logging.info(f"{symbol}: 波動率已降低但仍在冷卻期內，剩餘 {remaining_time/60:.1f} 分鐘")
+                    return False
+            return True
+            
+        # 檢查是否在暫停狀態
+        if volatility_status.is_paused:
+            pause_start = volatility_status.pause_start_time
+            if pause_start:
+                elapsed_minutes = (timezone.now() - pause_start).total_seconds() / 60
+                logging.info(f"{symbol}: 因波動率異常暫停交易中，已暫停 {elapsed_minutes:.1f} 分鐘，ATR比率: {atr_ratio:.2f}")
+            return False
+            
+        return True
+
+    def adjust_position_size_by_volatility(self, symbol: str, base_quantity: float, df: pd.DataFrame) -> float:
+        """
+        根據波動率調整倉位大小
+        
+        參數：
+            symbol (str): 交易對符號
+            base_quantity (float): 基礎倉位大小
+            df (pd.DataFrame): 包含ATR數據的DataFrame
+            
+        回傳：
+            float: 調整後的倉位大小
+        """
+        if not self.enable_volatility_risk_adjustment:
+            return base_quantity
+            
+        # 獲取歷史平均ATR
+        avg_atr = self.average_atrs.get(symbol)
+        if avg_atr is None or avg_atr < 1e-9:
+            return base_quantity
+            
+        # 獲取當前ATR
+        if 'atr' not in df.columns or df['atr'].empty:
+            return base_quantity
+            
+        current_atr = df['atr'].iloc[-1]
+        if current_atr is None or pd.isna(current_atr):
+            return base_quantity
+            
+        # 計算ATR比率
+        atr_ratio = current_atr / avg_atr
+        
+        # 根據波動率調整倉位大小
+        if atr_ratio > self.volatility_threshold_multiplier:
+            # 波動率較高時減少倉位
+            adjustment_factor = self.volatility_threshold_multiplier / atr_ratio
+            adjusted_quantity = base_quantity * adjustment_factor
+            logging.info(f"{symbol}: 波動率較高 (ATR比率: {atr_ratio:.2f})，倉位調整係數: {adjustment_factor:.2f}")
+        elif atr_ratio < 0.5:
+            # 波動率較低時可以適當增加倉位
+            adjustment_factor = min(1.5, 1.0 / atr_ratio)
+            adjusted_quantity = base_quantity * adjustment_factor
+            logging.info(f"{symbol}: 波動率較低 (ATR比率: {atr_ratio:.2f})，倉位調整係數: {adjustment_factor:.2f}")
+        else:
+            # 波動率正常
+            adjusted_quantity = base_quantity
+            logging.debug(f"{symbol}: 波動率正常 (ATR比率: {atr_ratio:.2f})，使用基礎倉位大小")
+            
+        return adjusted_quantity

@@ -1,9 +1,9 @@
 from django.contrib import admin
 from django import forms
 import json
-from .models import TraderConfig, TradingPair, Position, Trade, DailyStats, TraderStatus, StrategyCombo, COMBO_MODE_CHOICES
+from .models import TraderConfig, TradingPair, Position, Trade, DailyStats, TraderStatus, StrategyCombo, COMBO_MODE_CHOICES, VolatilityPauseStatus
 # Import strategy_bundles from strategy.base (used for StrategyComboForm to get strategy names)
-from strategy.base import strategy_bundles
+# from strategy.base import strategy_bundles  # 暫時註釋掉，避免導入錯誤
 
 # 定義配置鍵的中文翻譯
 # This dictionary maps config keys to their display names in the admin.
@@ -381,3 +381,14 @@ admin.site.register(Position)
 admin.site.register(Trade)
 admin.site.register(DailyStats)
 admin.site.register(TraderStatus)
+
+@admin.register(VolatilityPauseStatus)
+class VolatilityPauseStatusAdmin(admin.ModelAdmin):
+    list_display = ('trading_pair', 'is_paused', 'current_atr_ratio', 'pause_reason', 'last_updated')
+    list_filter = ('is_paused', 'trading_pair')
+    search_fields = ('trading_pair__symbol', 'pause_reason')
+    readonly_fields = ('last_updated',)
+    
+    def has_add_permission(self, request):
+        # 不允許手動添加，只能通過系統自動創建
+        return False

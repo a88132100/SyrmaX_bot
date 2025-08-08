@@ -4,6 +4,29 @@
 [![Django](https://img.shields.io/badge/Django-5.2+-green.svg)](https://www.djangoproject.com/)
 [![License](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
+## 如何將修改同步到GitHub
+
+當您對代碼進行修改後，可以按照以下步驟將修改同步到GitHub：
+
+1. 打開終端（命令提示符或PowerShell）
+2. 導航到項目目錄：
+   ```
+   cd 您的項目路徑
+   ```
+3. 添加所有修改的文件到暫存區：
+   ```
+   git add .
+   ```
+4. 提交您的修改（添加描述性的提交信息）：
+   ```
+   git commit -m "描述您所做的修改"
+   ```
+5. 將修改推送到GitHub：
+   ```
+   git push origin main
+   ```
+
+
 > 讓一般使用者能用「策略包」秒級執行多幣種自動交易，支援多交易所切換、完善風控、訂閱制商業模式
 
 ## 🎯 專案目標
@@ -137,6 +160,7 @@ npm run dev
 - **頻率限制**：每小時/每日交易次數限制
 - **資金管理**：動態倉位大小，最大回撤控制
 - **連續止損**：自動暫停交易機制
+- **波動率風險調整**：基於ATR異常放大監控，自動暫停交易和調整倉位大小
 
 ### 監控功能
 - **即時價格**：WebSocket 即時更新
@@ -190,6 +214,13 @@ MAX_POSITION_RATIO=0.8
 MAX_TRADES_PER_HOUR=10
 MAX_TRADES_PER_DAY=50
 MAX_DAILY_LOSS_PERCENT=25.0
+
+# 波動率風險調整配置
+ENABLE_VOLATILITY_RISK_ADJUSTMENT=true
+VOLATILITY_THRESHOLD_MULTIPLIER=2.0
+VOLATILITY_PAUSE_THRESHOLD=3.0
+VOLATILITY_RECOVERY_THRESHOLD=1.5
+VOLATILITY_PAUSE_DURATION_MINUTES=30
 ```
 
 ### 策略配置

@@ -49,6 +49,13 @@ class Command(BaseCommand):
             'MAX_TRADES_PER_DAY': '每日最大開倉次數',
             'MAX_DAILY_LOSS_PERCENT': '每日最大虧損百分比',
             
+            # 波動率風險調整配置
+            'ENABLE_VOLATILITY_RISK_ADJUSTMENT': '是否啟用基於波動率的風險調整',
+            'VOLATILITY_THRESHOLD_MULTIPLIER': '波動率閾值倍數（用於倉位調整）',
+            'VOLATILITY_PAUSE_THRESHOLD': '波動率暫停閾值（ATR比率超過此值時暫停交易）',
+            'VOLATILITY_RECOVERY_THRESHOLD': '波動率恢復閾值（ATR比率低於此值時恢復交易）',
+            'VOLATILITY_PAUSE_DURATION_MINUTES': '波動率暫停持續時間（分鐘）',
+            
             # 系統配置
             'GLOBAL_INTERVAL_SECONDS': '每次交易循環的間隔秒數',
             
