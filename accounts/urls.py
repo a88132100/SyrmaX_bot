@@ -13,8 +13,12 @@ urlpatterns = [
     path('auth/', include('djoser.urls')),
     path('auth/', include('djoser.urls.jwt')),
     
-    # 社交登入端點
-    path('social/', include('social_django.urls', namespace='social')),
+    # 自訂社交登入端點
+    path('social/login/google/', views.google_login, name='google_login'),
+    path('social/login/facebook/', views.facebook_login, name='facebook_login'),
+    
+    # 社交登入完成回調（保留 social_django 的回調）
+    path('social/', include('social_django.urls')),
     
     # JWT Token 端點
     path('token/', TokenObtainPairView.as_view(), name='token_obtain_pair'),
@@ -29,4 +33,7 @@ urlpatterns = [
     path('phone/verify/', views.PhoneVerificationView.as_view(), name='phone_verification'),
     path('logout/', views.LogoutView.as_view(), name='logout'),
     path('social/status/', views.SocialLoginView.as_view(), name='social_status'),
+    
+    # 測試端點
+    path('social/test/', views.social_login_test, name='social_login_test'),
 ]

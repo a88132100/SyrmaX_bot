@@ -256,3 +256,8 @@ SOCIAL_AUTH_USER_MODEL = 'accounts.User'
 LOGIN_URL = '/api/accounts/auth/login/'
 LOGIN_REDIRECT_URL = '/api/accounts/profile/'
 LOGOUT_REDIRECT_URL = '/api/accounts/auth/login/'
+
+# 社交登入完成 URL
+SOCIAL_AUTH_LOGIN_REDIRECT_URL = '/api/accounts/profile/'
+SOCIAL_AUTH_LOGOUT_REDIRECT_URL = '/api/accounts/auth/login/'
+SOCIAL_AUTH_LOGIN_ERROR_URL = '/api/accounts/auth/login/'

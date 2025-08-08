@@ -13,6 +13,9 @@ from django.utils.html import strip_tags
 from django.conf import settings
 from django_email_verification import send_email
 from social_django.models import UserSocialAuth
+from django.shortcuts import redirect
+from django.contrib import messages
+from django.http import JsonResponse
 from .serializers import (
     UserSerializer, UserCreateSerializer, LoginSerializer,
     PasswordChangeSerializer, EmailVerificationSerializer, PhoneVerificationSerializer
@@ -159,6 +162,69 @@ class SocialLoginView(APIView):
             'user': UserSerializer(user).data,
             'social_accounts': social_data
         })
+
+
+@api_view(['GET'])
+@permission_classes([permissions.AllowAny])
+def social_login_test(request):
+    """
+    社交登入測試頁面
+    """
+    return Response({
+        'message': '社交登入測試頁面',
+        'available_providers': [
+            {
+                'name': 'Google',
+                'url': '/api/accounts/social/login/google/',
+                'description': '使用 Google 帳號登入'
+            },
+            {
+                'name': 'Facebook',
+                'url': '/api/accounts/social/login/facebook/',
+                'description': '使用 Facebook 帳號登入'
+            }
+        ],
+        'note': '點擊上方連結進行社交登入測試',
+        'status': '這些端點會檢查 OAuth2 配置狀態'
+    })
+
+
+@api_view(['GET'])
+@permission_classes([permissions.AllowAny])
+def google_login(request):
+    """
+    自訂 Google 登入視圖
+    """
+    # 檢查是否已配置 Google OAuth2
+    if not hasattr(settings, 'SOCIAL_AUTH_GOOGLE_OAUTH2_KEY') or settings.SOCIAL_AUTH_GOOGLE_OAUTH2_KEY == 'your-google-oauth2-key':
+        return Response({
+            'error': 'Google OAuth2 尚未配置',
+            'message': '請按照 docs/social_login_setup.md 的指南配置 Google OAuth2',
+            'setup_url': 'https://console.cloud.google.com/',
+            'docs_url': '/docs/social_login_setup.md'
+        }, status=status.HTTP_400_BAD_REQUEST)
+    
+    # 如果已配置，重導向到 Google 登入
+    return redirect('social:begin', 'google-oauth2')
+
+
+@api_view(['GET'])
+@permission_classes([permissions.AllowAny])
+def facebook_login(request):
+    """
+    自訂 Facebook 登入視圖
+    """
+    # 檢查是否已配置 Facebook OAuth
+    if not hasattr(settings, 'SOCIAL_AUTH_FACEBOOK_KEY') or settings.SOCIAL_AUTH_FACEBOOK_KEY == 'your-facebook-app-id':
+        return Response({
+            'error': 'Facebook OAuth 尚未配置',
+            'message': '請按照 docs/social_login_setup.md 的指南配置 Facebook OAuth',
+            'setup_url': 'https://developers.facebook.com/',
+            'docs_url': '/docs/social_login_setup.md'
+        }, status=status.HTTP_400_BAD_REQUEST)
+    
+    # 如果已配置，重導向到 Facebook 登入
+    return redirect('social:begin', 'facebook')
 
 
 @api_view(['POST'])
