@@ -212,6 +212,10 @@ class MultiSymbolTrader:
                 'pause_reason': None,
                 'current_atr_ratio': 1.0
             }
+        
+        # 最大同時持倉數量限制配置
+        self.enable_max_position_limit = self.get_config('ENABLE_MAX_POSITION_LIMIT', type=bool, default=True)
+        self.max_simultaneous_positions = self.get_config('MAX_SIMULTANEOUS_POSITIONS', type=int, default=3)
 
         # 初始化每日風控統計
         self.daily_stats = {
@@ -846,6 +850,12 @@ class MultiSymbolTrader:
                         trader_status.daily_trade_count >= self.max_trades_per_day):
                         logging.info("已達全局開倉次數上限，跳過開倉。")
                         continue
+                    
+                    # 檢查最大同時持倉數量限制
+                    if not self.check_max_position_limit():
+                        logging.info(f"{symbol}: 已達到最大同時持倉數量限制，跳過開倉。")
+                        continue
+                    
                     signal = self.generate_signal(df) # 這裡使用 generate_signal，它會根據組合模式來執行
                     if signal == 0:
                         continue
@@ -1317,3 +1327,28 @@ class MultiSymbolTrader:
             logging.debug(f"{symbol}: 波動率正常 (ATR比率: {atr_ratio:.2f})，使用基礎倉位大小")
             
         return adjusted_quantity
+
+    def check_max_position_limit(self) -> bool:
+        """
+        檢查是否達到最大同時持倉數量限制
+        
+        回傳：
+            bool: True表示可以開新倉，False表示已達到限制
+        """
+        if not self.enable_max_position_limit:
+            return True
+            
+        try:
+            # 統計當前活躍持倉數量
+            active_positions_count = Position.objects.filter(active=True).count()
+            
+            if active_positions_count >= self.max_simultaneous_positions:
+                logging.warning(f"已達到最大同時持倉數量限制 ({self.max_simultaneous_positions})，當前活躍持倉: {active_positions_count}")
+                return False
+            else:
+                logging.debug(f"當前活躍持倉數量: {active_positions_count}/{self.max_simultaneous_positions}")
+                return True
+                
+        except Exception as e:
+            logging.error(f"檢查最大持倉數量限制時發生錯誤: {e}")
+            return True  # 發生錯誤時允許開倉，避免過度限制

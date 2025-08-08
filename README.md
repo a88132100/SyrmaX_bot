@@ -36,6 +36,9 @@
 - **完善風控**：止盈止損、每日限額、連續止損控制
 - **即時監控**：Web UI 即時查看交易狀態與績效
 - **商業化準備**：訂閱制、多用戶、API 管理
+- **用戶認證系統**：完整的註冊、登入、驗證 API
+- **社交登入**：支援 Google、Facebook 等第三方登入
+- **Email 驗證**：完整的 Email 發送和驗證功能
 
 ## 🏗️ 技術架構
 
@@ -65,6 +68,9 @@
 - **風控層**：止盈止損、頻率限制、資金管理
 - **下單層**：統一訂單介面，支援測試網
 - **資產層**：持倉管理、績效追蹤、統計分析
+- **認證層**：用戶註冊、登入、JWT Token 管理
+- **社交層**：Google、Facebook 第三方登入
+- **通訊層**：Email 發送、驗證、通知
 
 ## 🚀 快速開始
 
@@ -161,6 +167,7 @@ npm run dev
 - **資金管理**：動態倉位大小，最大回撤控制
 - **連續止損**：自動暫停交易機制
 - **波動率風險調整**：基於ATR異常放大監控，自動暫停交易和調整倉位大小
+- **最大同時持倉數量限制**：限制機器人同時開啟的交易對數量，控制整體風險暴露
 
 ### 監控功能
 - **即時價格**：WebSocket 即時更新
@@ -221,6 +228,10 @@ VOLATILITY_THRESHOLD_MULTIPLIER=2.0
 VOLATILITY_PAUSE_THRESHOLD=3.0
 VOLATILITY_RECOVERY_THRESHOLD=1.5
 VOLATILITY_PAUSE_DURATION_MINUTES=30
+
+# 最大同時持倉數量限制配置
+ENABLE_MAX_POSITION_LIMIT=true
+MAX_SIMULTANEOUS_POSITIONS=3
 ```
 
 ### 策略配置

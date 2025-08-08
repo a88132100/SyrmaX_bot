@@ -22,11 +22,13 @@ class Command(BaseCommand):
             
             # 槓桿配置
             'LEVERAGE': '所有交易對的統一槓桿倍數',
+            'AUTO_SET_LEVERAGE': '自動設定槓桿',
             
             # 資金管理配置
             'BASE_POSITION_RATIO': '基礎資金比例',
             'MIN_POSITION_RATIO': '最小資金比例',
             'MAX_POSITION_RATIO': '最大資金比例',
+            'RISK_PER_TRADE_PCT': '每筆交易風險百分比',
             
             # 止盈止損配置
             'EXIT_MODE': '止盈止損模式 (PERCENTAGE/AMOUNT/ATR/HYBRID)',
@@ -47,7 +49,7 @@ class Command(BaseCommand):
             'ENABLE_TRADE_LIMITS': '是否啟用每日/每小時開倉次數限制',
             'MAX_TRADES_PER_HOUR': '每小時最大開倉次數',
             'MAX_TRADES_PER_DAY': '每日最大開倉次數',
-            'MAX_DAILY_LOSS_PERCENT': '每日最大虧損百分比',
+            'MAX_DAILY_LOSS_PCT': '每日最大虧損百分比',
             
             # 波動率風險調整配置
             'ENABLE_VOLATILITY_RISK_ADJUSTMENT': '是否啟用基於波動率的風險調整',
@@ -56,13 +58,21 @@ class Command(BaseCommand):
             'VOLATILITY_RECOVERY_THRESHOLD': '波動率恢復閾值（ATR比率低於此值時恢復交易）',
             'VOLATILITY_PAUSE_DURATION_MINUTES': '波動率暫停持續時間（分鐘）',
             
+            # 最大同時持倉數量限制配置
+            'ENABLE_MAX_POSITION_LIMIT': '是否啟用最大同時持倉數量限制',
+            'MAX_SIMULTANEOUS_POSITIONS': '最大同時持倉數量',
+            
             # 系統配置
             'GLOBAL_INTERVAL_SECONDS': '每次交易循環的間隔秒數',
+            'MAX_TRADES_PER_HOUR': '每小時最大開倉次數',
+            'MAX_TRADES_PER_DAY': '每日最大開倉次數',
             
             # 精度配置
             'SYMBOL_PRECISION': '每個交易對的數量精度 (JSON 格式)',
             'SYMBOL_INTERVALS': '每個交易對使用的 K 線時間週期 (JSON 格式)',
             'SYMBOL_INTERVAL_SECONDS': '每個幣種的交易判斷頻率（單位：秒）(JSON 格式)',
+            'ATR_LENGTH': 'ATR指標週期長度',
+            'ATR_MULTIPLIER': 'ATR乘數',
         }
 
         # 處理每個配置

@@ -173,6 +173,10 @@ DEFAULT_CONFIG = {
     "VOLATILITY_RECOVERY_THRESHOLD": 1.5,      # 波動率恢復閾值（ATR比率低於此值時恢復交易）
     "VOLATILITY_PAUSE_DURATION_MINUTES": 30,   # 波動率暫停持續時間（分鐘）
     
+    # 最大同時持倉數量限制配置
+    "ENABLE_MAX_POSITION_LIMIT": True,
+    "MAX_SIMULTANEOUS_POSITIONS": 3,
+    
     # 系統配置
     "GLOBAL_INTERVAL_SECONDS": 3,   # 全局間隔秒數
     

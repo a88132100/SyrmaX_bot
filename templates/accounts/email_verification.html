@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>驗證您的 {{ site_name }} 帳號</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .header {
+            background-color: #007bff;
+            color: white;
+            padding: 20px;
+            text-align: center;
+            border-radius: 5px 5px 0 0;
+        }
+        .content {
+            background-color: #f8f9fa;
+            padding: 20px;
+            border: 1px solid #dee2e6;
+        }
+        .button {
+            display: inline-block;
+            background-color: #28a745;
+            color: white;
+            padding: 12px 24px;
+            text-decoration: none;
+            border-radius: 5px;
+            margin: 20px 0;
+        }
+        .footer {
+            background-color: #6c757d;
+            color: white;
+            padding: 15px;
+            text-align: center;
+            border-radius: 0 0 5px 5px;
+            font-size: 14px;
+        }
+        .warning {
+            background-color: #fff3cd;
+            border: 1px solid #ffeaa7;
+            padding: 15px;
+            border-radius: 5px;
+            margin: 20px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>{{ site_name }}</h1>
+        <p>帳號驗證</p>
+    </div>
+    
+    <div class="content">
+        <h2>親愛的 {{ user.first_name|default:user.username }}，</h2>
+        
+        <p>感謝您註冊 {{ site_name }}！為了確保您的帳號安全，請點擊下方的按鈕來驗證您的 Email 地址。</p>
+        
+        <div style="text-align: center;">
+            <a href="{{ verification_url }}" class="button">驗證 Email 地址</a>
+        </div>
+        
+        <p>如果按鈕無法點擊，請複製以下連結到瀏覽器：</p>
+        <p style="word-break: break-all; background-color: #e9ecef; padding: 10px; border-radius: 3px;">
+            {{ verification_url }}
+        </p>
+        
+        <div class="warning">
+            <strong>注意：</strong>
+            <ul>
+                <li>此驗證連結將在 24 小時後失效</li>
+                <li>如果您沒有註冊 {{ site_name }}，請忽略此 Email</li>
+                <li>為了您的帳號安全，請勿將此連結分享給他人</li>
+            </ul>
+        </div>
+        
+        <p>驗證完成後，您就可以開始使用 {{ site_name }} 的所有功能了！</p>
+        
+        <p>如果您有任何問題，請隨時聯繫我們的客服團隊。</p>
+        
+        <p>祝您使用愉快！<br>
+        {{ site_name }} 團隊</p>
+    </div>
+    
+    <div class="footer">
+        <p>此 Email 由 {{ site_name }} 系統自動發送，請勿回覆</p>
+        <p>&copy; 2024 {{ site_name }}. 版權所有。</p>
+    </div>
+</body>
+</html>

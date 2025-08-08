@@ -21,4 +21,5 @@ urlpatterns = [
     path('admin/', admin.site.urls),
     path('api/', include('trading_api.urls')),
     path('api/strategies/', include('strategies.urls')),
+    path('api/accounts/', include('accounts.urls')),  # 新增用戶認證 API
 ]

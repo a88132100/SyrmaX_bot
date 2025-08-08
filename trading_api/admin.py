@@ -38,37 +38,146 @@ CONFIG_KEY_TRANSLATIONS = {
     'GLOBAL_INTERVAL_SECONDS': '全局交易判斷頻率（秒）',
     'RISK_LIMIT_TIERS': '交易所風險限額階梯 (JSON 格式，例如: [[100000, 20], [200000, 10]])',
     'MAX_DAILY_LOSS_PCT': '每日最大虧損百分比',
+    'RISK_PER_TRADE_PCT': '每筆交易風險百分比',
+    'AUTO_SET_LEVERAGE': '自動設定槓桿',
+    'ENABLE_VOLATILITY_RISK_ADJUSTMENT': '啟用波動率風險調整',
+    'VOLATILITY_THRESHOLD_MULTIPLIER': '波動率閾值倍數',
+    'VOLATILITY_PAUSE_THRESHOLD': '波動率暫停閾值',
+    'VOLATILITY_RECOVERY_THRESHOLD': '波動率恢復閾值',
+    'VOLATILITY_PAUSE_DURATION_MINUTES': '波動率暫停持續時間（分鐘）',
+    'MAX_TRADES_PER_HOUR': '每小時最大開倉次數',
+    'MAX_TRADES_PER_DAY': '每日最大開倉次數',
+    'ATR_LENGTH': 'ATR指標週期長度',
+    'ATR_MULTIPLIER': 'ATR乘數',
+    'SYMBOL_PRECISION': '交易對數量精度 (JSON 格式)',
+    'DYNAMIC_ATR_MULTIPLIER': '動態ATR乘數',
+    'MAX_DAILY_LOSS_PERCENT': '每日最大虧損百分比',
     # 如果你還有其他配置項，可以在這裡繼續添加翻譯
+
+    # 波動率風險調整配置
+    'ENABLE_VOLATILITY_RISK_ADJUSTMENT': '是否啟用基於波動率的風險調整',
+    'VOLATILITY_THRESHOLD_MULTIPLIER': '波動率閾值倍數（用於倉位調整）',
+    'VOLATILITY_PAUSE_THRESHOLD': '波動率暫停閾值（ATR比率超過此值時暫停交易）',
+    'VOLATILITY_RECOVERY_THRESHOLD': '波動率恢復閾值（ATR比率低於此值時恢復交易）',
+    'VOLATILITY_PAUSE_DURATION_MINUTES': '波動率暫停持續時間（分鐘）',
+    
+    # 最大同時持倉數量限制配置
+    'ENABLE_MAX_POSITION_LIMIT': '是否啟用最大同時持倉數量限制',
+    'MAX_SIMULTANEOUS_POSITIONS': '最大同時持倉數量',
 }
+
+# 布林值選擇框選項
+BOOLEAN_CHOICES = [
+    ('True', '開啟'),
+    ('False', '關閉'),
+]
+
+# 交易所選擇框選項
+EXCHANGE_CHOICES = [
+    ('BINANCE', 'Binance'),
+    ('BYBIT', 'Bybit'),
+    ('OKX', 'OKX'),
+    ('BINGX', 'BingX'),
+    ('BITGET', 'Bitget'),
+]
+
+# 所有可用的配置鍵選項（用於新增時的下拉選擇框）
+CONFIG_KEY_CHOICES = [
+    ('EXCHANGE', '交易所類型'),
+    ('EXCHANGE_NAME', '交易所名稱'),
+    ('USE_TESTNET', '是否使用測試網'),
+    ('API_KEY', 'API 金鑰 (Key)'),
+    ('API_SECRET', 'API 密鑰 (Secret)'),
+    ('SYMBOLS', '交易幣種 (逗號分隔)'),
+    ('TEST_MODE', '是否為測試模式'),
+    ('LEVERAGE', '交易槓桿倍數'),
+    ('BASE_POSITION_RATIO', '基礎資金比例'),
+    ('MIN_POSITION_RATIO', '最小資金比例'),
+    ('MAX_POSITION_RATIO', '最大資金比例'),
+    ('EXIT_MODE', '止盈止損模式'),
+    ('PRICE_TAKE_PROFIT_PERCENT', '百分比止盈'),
+    ('PRICE_STOP_LOSS_PERCENT', '百分比止損'),
+    ('AMOUNT_TAKE_PROFIT_USDT', '固定金額止盈 (USDT)'),
+    ('AMOUNT_STOP_LOSS_USDT', '固定金額止損 (USDT)'),
+    ('ATR_TAKE_PROFIT_MULTIPLIER', 'ATR止盈倍數'),
+    ('ATR_STOP_LOSS_MULTIPLIER', 'ATR止損倍數'),
+    ('HYBRID_MIN_TAKE_PROFIT_USDT', '混合模式：最小止盈金額 (USDT)'),
+    ('HYBRID_MAX_TAKE_PROFIT_USDT', '混合模式：最大止盈金額 (USDT)'),
+    ('HYBRID_MIN_STOP_LOSS_USDT', '混合模式：最小止損金額 (USDT)'),
+    ('HYBRID_MAX_STOP_LOSS_USDT', '混合模式：最大止損金額 (USDT)'),
+    ('MAX_CONSECUTIVE_STOP_LOSS', '最大連續止損次數'),
+    ('ENABLE_TRADE_LOG', '啟用交易日誌'),
+    ('ENABLE_TRADE_LIMITS', '啟用開倉次數限制'),
+    ('SYMBOL_INTERVALS', 'K線週期 (JSON 格式)'),
+    ('SYMBOL_INTERVAL_SECONDS', '交易判斷頻率（秒，JSON 格式）'),
+    ('GLOBAL_INTERVAL_SECONDS', '全局交易判斷頻率（秒）'),
+    ('RISK_LIMIT_TIERS', '交易所風險限額階梯 (JSON 格式)'),
+    ('MAX_DAILY_LOSS_PCT', '每日最大虧損百分比'),
+    ('RISK_PER_TRADE_PCT', '每筆交易風險百分比'),
+    ('AUTO_SET_LEVERAGE', '自動設定槓桿'),
+    ('ENABLE_VOLATILITY_RISK_ADJUSTMENT', '啟用波動率風險調整'),
+    ('VOLATILITY_THRESHOLD_MULTIPLIER', '波動率閾值倍數'),
+    ('VOLATILITY_PAUSE_THRESHOLD', '波動率暫停閾值'),
+    ('VOLATILITY_RECOVERY_THRESHOLD', '波動率恢復閾值'),
+    ('VOLATILITY_PAUSE_DURATION_MINUTES', '波動率暫停持續時間（分鐘）'),
+    ('MAX_TRADES_PER_HOUR', '每小時最大開倉次數'),
+    ('MAX_TRADES_PER_DAY', '每日最大開倉次數'),
+    ('ATR_LENGTH', 'ATR指標週期長度'),
+    ('ATR_MULTIPLIER', 'ATR乘數'),
+    ('SYMBOL_PRECISION', '交易對數量精度 (JSON 格式)'),
+    ('DYNAMIC_ATR_MULTIPLIER', '動態ATR乘數'),
+    ('MAX_DAILY_LOSS_PERCENT', '每日最大虧損百分比'),
+    ('ENABLE_VOLATILITY_RISK_ADJUSTMENT', '是否啟用基於波動率的風險調整'),
+    ('VOLATILITY_THRESHOLD_MULTIPLIER', '波動率閾值倍數（用於倉位調整）'),
+    ('VOLATILITY_PAUSE_THRESHOLD', '波動率暫停閾值（ATR比率超過此值時暫停交易）'),
+    ('VOLATILITY_RECOVERY_THRESHOLD', '波動率恢復閾值（ATR比率低於此值時恢復交易）'),
+    ('VOLATILITY_PAUSE_DURATION_MINUTES', '波動率暫停持續時間（分鐘）'),
+    ('ENABLE_MAX_POSITION_LIMIT', '是否啟用最大同時持倉數量限制'),
+    ('MAX_SIMULTANEOUS_POSITIONS', '最大同時持倉數量'),
+]
 
 # 定義每個配置鍵的預期數據類型，用於動態生成表單字段
 CONFIG_FIELD_TYPES = {
-    'USE_TESTNET': bool,
-    'TEST_MODE': bool,
-    'ENABLE_TRADE_LOG': bool,
-    'ENABLE_TRADE_LIMITS': bool,
+    'USE_TESTNET': 'bool_choice',
+    'TEST_MODE': 'bool_choice',
+    'ENABLE_TRADE_LOG': 'bool_choice',
+    'ENABLE_TRADE_LIMITS': 'bool_choice',
+    'AUTO_SET_LEVERAGE': 'bool_choice',
+    'ENABLE_VOLATILITY_RISK_ADJUSTMENT': 'bool_choice',
     'LEVERAGE': int,
     'MAX_CONSECUTIVE_STOP_LOSS': int,
     'GLOBAL_INTERVAL_SECONDS': int,
+    'MAX_TRADES_PER_HOUR': int,
+    'MAX_TRADES_PER_DAY': int,
+    'VOLATILITY_PAUSE_DURATION_MINUTES': int,
+    'ATR_LENGTH': int,
     'BASE_POSITION_RATIO': float,
     'MIN_POSITION_RATIO': float,
     'MAX_POSITION_RATIO': float,
+    'RISK_PER_TRADE_PCT': float,
     'PRICE_TAKE_PROFIT_PERCENT': float,
     'PRICE_STOP_LOSS_PERCENT': float,
     'AMOUNT_TAKE_PROFIT_USDT': float,
     'AMOUNT_STOP_LOSS_USDT': float,
     'ATR_TAKE_PROFIT_MULTIPLIER': float,
     'ATR_STOP_LOSS_MULTIPLIER': float,
+    'ATR_MULTIPLIER': float,
     'HYBRID_MIN_TAKE_PROFIT_USDT': float,
     'HYBRID_MAX_TAKE_PROFIT_USDT': float,
     'HYBRID_MIN_STOP_LOSS_USDT': float,
     'HYBRID_MAX_STOP_LOSS_USDT': float,
+    'MAX_DAILY_LOSS_PCT': float,
+    'VOLATILITY_THRESHOLD_MULTIPLIER': float,
+    'VOLATILITY_PAUSE_THRESHOLD': float,
+    'VOLATILITY_RECOVERY_THRESHOLD': float,
+    'ENABLE_MAX_POSITION_LIMIT': 'bool_choice',
+    'MAX_SIMULTANEOUS_POSITIONS': int,
     'SYMBOLS': list, # Custom handling for comma-separated string
     'SYMBOL_INTERVALS': dict, # Custom handling for JSON string
     'SYMBOL_INTERVAL_SECONDS': dict, # Custom handling for JSON string
     'EXIT_MODE': str, # 保持為 str，但會在 get_form 中動態變為 ChoiceField
+    'EXCHANGE_NAME': 'exchange_choice', # 交易所選擇框
     'RISK_LIMIT_TIERS': list, # 存儲為 JSON 字符串，解析為列表
-    'MAX_DAILY_LOSS_PCT': float,
     # Default is string for others
 }
 
@@ -103,8 +212,10 @@ class TraderConfigForm(forms.ModelForm):
         value = self.cleaned_data.get('value')
 
         # 根據字段類型，將輸入的 value 轉換為字符串形式存儲
-        if field_type == bool:
+        if field_type == 'bool_choice':
             return str(value) # 布林值存儲為 'True' 或 'False'
+        elif field_type == 'exchange_choice':
+            return str(value) # 交易所名稱存儲為字符串
         elif field_type == int:
             try:
                 if value == '': return '' # 允許空字符串作為可選字段
@@ -139,9 +250,14 @@ class TraderConfigForm(forms.ModelForm):
 
 @admin.register(TraderConfig)
 class TraderConfigAdmin(admin.ModelAdmin):
-    list_display = ('key', 'value', 'value_type', 'description')
+    list_display = ('key_display', 'value_display', 'value_type_display', 'description')
     fields = ('key', 'value', 'value_type', 'description')
     search_fields = ('key',)
+    list_filter = ('value_type',)
+    ordering = ('key',)
+    
+    class Media:
+        js = ("admin/js/trader_config_admin.js",)
 
     def get_form(self, request, obj=None, **kwargs):
         # 動態創建一個新的表單類別來修改字段
@@ -154,12 +270,13 @@ class TraderConfigAdmin(admin.ModelAdmin):
             display_label = CONFIG_KEY_TRANSLATIONS.get(config_key, config_key)
 
             # 動態為 'value' 字段創建正確的表單字段類型
-            if field_type == bool:
-                CurrentTraderConfigForm.base_fields['value'] = forms.BooleanField(
+            if field_type == 'bool_choice':
+                CurrentTraderConfigForm.base_fields['value'] = forms.ChoiceField(
                     label=display_label,
                     required=False,
-                    widget=forms.CheckboxInput(),
-                    initial=obj.value == 'True'
+                    choices=BOOLEAN_CHOICES,
+                    initial=obj.value,
+                    widget=forms.Select(attrs={'class': 'form-control'})
                 )
             elif field_type == int:
                 CurrentTraderConfigForm.base_fields['value'] = forms.IntegerField(
@@ -196,6 +313,14 @@ class TraderConfigAdmin(admin.ModelAdmin):
                     choices=EXIT_MODE_CHOICES,
                     initial=obj.value
                 )
+            elif field_type == 'exchange_choice': # 新增：處理交易所選擇框
+                CurrentTraderConfigForm.base_fields['value'] = forms.ChoiceField(
+                    label=display_label,
+                    required=False,
+                    choices=EXCHANGE_CHOICES,
+                    initial=obj.value,
+                    widget=forms.Select(attrs={'class': 'form-control'})
+                )
             else: # 預設為 CharField (字符串)
                 CurrentTraderConfigForm.base_fields['value'] = forms.CharField(
                     label=display_label,
@@ -204,31 +329,36 @@ class TraderConfigAdmin(admin.ModelAdmin):
                     initial=obj.value
                 )
             
-            # 確保 Meta.fields 只包含 value
-            CurrentTraderConfigForm.Meta.fields = ('value',)
+            # 確保 Meta.fields 包含 value 和 description
+            CurrentTraderConfigForm.Meta.fields = ('value', 'description')
 
         else: # 新增實例時
-            # 為新增模式添加 key 字段
-            CurrentTraderConfigForm.base_fields['key'] = forms.CharField(
-                label="配置鍵名 (英文，例如: API_KEY)",
-                required=True, # Key 在新增時是必須的
+            # 為新增模式添加 key 字段（改為下拉選擇框）
+            CurrentTraderConfigForm.base_fields['key'] = forms.ChoiceField(
+                label="配置鍵名",
+                required=True,
+                choices=CONFIG_KEY_CHOICES,
+                widget=forms.Select(attrs={'class': 'config-key-selector'})
+            )
+            # 配置值字段將根據選擇的 key 動態變化
+            CurrentTraderConfigForm.base_fields['value'] = forms.CharField(
+                label="配置值",
+                required=False,
                 widget=forms.TextInput()
             )
-            CurrentTraderConfigForm.base_fields['value'].label = "配置值 (預設為文字輸入)"
-            CurrentTraderConfigForm.base_fields['value'].widget = forms.TextInput() 
-            # 確保 Meta.fields 包含 key 和 value
-            CurrentTraderConfigForm.Meta.fields = ('key', 'value',)
+            # 確保 Meta.fields 包含 key、value 和 description
+            CurrentTraderConfigForm.Meta.fields = ('key', 'value', 'description')
 
         return CurrentTraderConfigForm
 
     def get_fieldsets(self, request, obj=None):
-        if obj: # 編輯現有實例時，只顯示 value 字段
+        if obj: # 編輯現有實例時，顯示 value 和 description 字段
             return [
-                (None, {'fields': ('value',)}),
+                (None, {'fields': ('value', 'description')}),
             ]
         else: # 新增實例時，顯示 key 和 value 字段
             return [
-                (None, {'fields': ('key', 'value',)}),
+                (None, {'fields': ('key', 'value', 'description')}),
             ]
 
     # Custom method to display key with Chinese translation in list view
@@ -239,8 +369,8 @@ class TraderConfigAdmin(admin.ModelAdmin):
     # Custom method to display value, especially for complex types, in list view
     def value_display(self, obj):
         field_type = CONFIG_FIELD_TYPES.get(obj.key, str)
-        if field_type == bool:
-            return "是" if obj.value == 'True' else "否"
+        if field_type == 'bool_choice':
+            return "開啟" if obj.value == 'True' else "關閉"
         elif field_type == list:
             try:
                 return ", ".join(json.loads(obj.value))
@@ -254,6 +384,25 @@ class TraderConfigAdmin(admin.ModelAdmin):
                 return obj.value
         return obj.value
     value_display.short_description = "配置值"
+
+    # Custom method to display value type with proper mapping
+    def value_type_display(self, obj):
+        field_type = CONFIG_FIELD_TYPES.get(obj.key, str)
+        if field_type == 'bool_choice':
+            return "布林選擇"
+        elif field_type == 'exchange_choice':
+            return "交易所選擇"
+        elif field_type == int:
+            return "整數"
+        elif field_type == float:
+            return "浮點數"
+        elif field_type == list:
+            return "列表"
+        elif field_type == dict:
+            return "字典"
+        else:
+            return "字串"
+    value_type_display.short_description = "值類型"
 
 
 # --- StrategyCombo Admin 配置 (保持之前修改的) ---
@@ -376,11 +525,41 @@ class StrategyComboAdmin(admin.ModelAdmin):
         js = ("admin/js/strategy_combo_admin.js",) # 這個 JS 文件需要你手動創建或修改
 
 # 註冊其他模型 (保持現有)
-admin.site.register(TradingPair)
-admin.site.register(Position)
-admin.site.register(Trade)
-admin.site.register(DailyStats)
-admin.site.register(TraderStatus)
+@admin.register(TradingPair)
+class TradingPairAdmin(admin.ModelAdmin):
+    list_display = ('symbol', 'interval', 'precision', 'average_atr', 'consecutive_stop_loss', 'last_trade_time')
+    list_filter = ('interval', 'precision')
+    search_fields = ('symbol',)
+    ordering = ('symbol',)
+
+@admin.register(Position)
+class PositionAdmin(admin.ModelAdmin):
+    list_display = ('trading_pair', 'active', 'side', 'entry_price', 'quantity', 'open_time')
+    list_filter = ('active', 'side', 'trading_pair')
+    search_fields = ('trading_pair__symbol',)
+    ordering = ('-open_time',)
+
+@admin.register(Trade)
+class TradeAdmin(admin.ModelAdmin):
+    list_display = ('trading_pair', 'trade_time', 'side', 'entry_price', 'exit_price', 'quantity', 'pnl', 'reason')
+    list_filter = ('side', 'trading_pair', 'trade_time')
+    search_fields = ('trading_pair__symbol', 'reason')
+    ordering = ('-trade_time',)
+    date_hierarchy = 'trade_time'
+
+@admin.register(DailyStats)
+class DailyStatsAdmin(admin.ModelAdmin):
+    list_display = ('trading_pair', 'date', 'pnl', 'start_balance', 'max_daily_loss_pct')
+    list_filter = ('trading_pair', 'date')
+    search_fields = ('trading_pair__symbol',)
+    ordering = ('-date', 'trading_pair')
+
+@admin.register(TraderStatus)
+class TraderStatusAdmin(admin.ModelAdmin):
+    list_display = ('is_trading_enabled', 'stop_signal_received', 'last_daily_reset_date', 
+                   'hourly_trade_count', 'daily_trade_count', 'last_hourly_reset')
+    list_filter = ('is_trading_enabled', 'stop_signal_received')
+    readonly_fields = ('last_daily_reset_date', 'last_hourly_reset')
 
 @admin.register(VolatilityPauseStatus)
 class VolatilityPauseStatusAdmin(admin.ModelAdmin):

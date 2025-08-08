@@ -3,6 +3,12 @@
 Django==5.2.2
 djangorestframework==3.14.0
 
+# 認證與授權
+djangorestframework-simplejwt==5.5.1
+djoser==2.3.3
+social-auth-app-django==5.5.1
+django-email-verification==0.3.3
+
 # 交易所 API 客戶端
 python-binance==1.0.19
 pybit==5.7.0
