@@ -1,0 +1,72 @@
+2025-08-13 19:42:50,059 - trading.trade_logger - INFO - 創建交易記錄CSV文件
+2025-08-13 19:42:50,059 - trading.trade_logger - INFO - 交易日誌記錄器初始化完成
+2025-08-13 19:42:50,124 - trading.trade_logger - INFO - 訂單創建: BTCUSDT BUY 0.001 @ 50000.0 策略: strategy_ema3_ema8_crossover
+2025-08-13 19:42:50,125 - trading.trade_logger - INFO - 訂單創建: ETHUSDT SELL 0.01 @ 3000.0 策略: strategy_rsi_mean_reversion
+2025-08-13 19:42:50,126 - trading.trade_logger - INFO - 訂單創建: ADAUSDT BUY 100.0 @ 0.5 策略: strategy_ichimoku_cloud
+2025-08-13 19:42:50,126 - trading.trade_logger - INFO - 訂單創建: SOLUSDT BUY 2.0 @ 100.0 策略: strategy_volume_spike
+2025-08-13 20:00:02,134 - trading.trade_logger - INFO - 交易日誌記錄器初始化完成
+2025-08-13 20:00:02,136 - trading.backtest_engine - INFO - 創建回測結果目錄: logs\backtest_results
+2025-08-13 20:00:02,137 - trading.backtest_engine - INFO - 回測引擎初始化完成
+2025-08-13 20:00:02,137 - trading.trade_logger - INFO - 訂單創建: BTCUSDT BUY 0.001 @ 50000.0 策略: strategy_ema3_ema8_crossover
+2025-08-13 20:00:02,137 - trading.trade_logger - INFO - 訂單創建: BTCUSDT SELL 0.001 @ 52000.0 策略: strategy_bollinger_breakout
+2025-08-13 20:00:02,138 - trading.trade_logger - INFO - 訂單創建: ETHUSDT BUY 0.01 @ 3000.0 策略: strategy_rsi_mean_reversion
+2025-08-13 20:00:02,138 - trading.trade_logger - INFO - 訂單創建: ETHUSDT SELL 0.01 @ 3100.0 策略: strategy_atr_breakout
+2025-08-13 20:00:02,139 - trading.trade_logger - INFO - 訂單創建: ADAUSDT BUY 100.0 @ 0.5 策略: strategy_ichimoku_cloud
+2025-08-13 20:00:02,139 - trading.trade_logger - INFO - 訂單創建: ADAUSDT SELL 100.0 @ 0.52 策略: strategy_long_ema_crossover
+2025-08-13 20:00:02,160 - trading.backtest_engine - INFO - 載入 0 筆交易記錄
+2025-08-13 20:00:02,165 - trading.backtest_engine - INFO - 載入 0 筆交易記錄
+2025-08-13 20:00:02,169 - trading.backtest_engine - INFO - 載入 0 筆交易記錄
+2025-08-13 20:00:02,173 - trading.backtest_engine - INFO - 載入 0 筆交易記錄
+2025-08-13 20:00:02,177 - trading.backtest_engine - INFO - 載入 0 筆交易記錄
+2025-08-13 20:00:02,177 - trading.backtest_engine - WARNING - 沒有找到交易數據，無法生成回測報告
+2025-08-13 20:01:52,999 - trading.trade_logger - INFO - 交易日誌記錄器初始化完成
+2025-08-13 20:01:53,002 - trading.backtest_engine - INFO - 回測引擎初始化完成
+2025-08-13 20:01:53,002 - trading.trade_logger - INFO - 訂單創建: BTCUSDT BUY 0.001 @ 50000.0 策略: strategy_ema3_ema8_crossover
+2025-08-13 20:01:53,002 - trading.trade_logger - INFO - 訂單創建: BTCUSDT SELL 0.001 @ 52000.0 策略: strategy_bollinger_breakout
+2025-08-13 20:01:53,003 - trading.trade_logger - INFO - 訂單創建: ETHUSDT BUY 0.01 @ 3000.0 策略: strategy_rsi_mean_reversion
+2025-08-13 20:01:53,003 - trading.trade_logger - INFO - 訂單創建: ETHUSDT SELL 0.01 @ 3100.0 策略: strategy_atr_breakout
+2025-08-13 20:01:53,004 - trading.trade_logger - INFO - 訂單創建: ADAUSDT BUY 100.0 @ 0.5 策略: strategy_ichimoku_cloud
+2025-08-13 20:01:53,004 - trading.trade_logger - INFO - 訂單創建: ADAUSDT SELL 100.0 @ 0.52 策略: strategy_long_ema_crossover
+2025-08-13 20:01:53,035 - trading.backtest_engine - INFO - 載入 6 筆交易記錄
+2025-08-13 20:01:53,050 - trading.backtest_engine - INFO - 載入 6 筆交易記錄
+2025-08-13 20:01:53,060 - trading.backtest_engine - INFO - 載入 6 筆交易記錄
+2025-08-13 20:01:53,089 - trading.backtest_engine - INFO - 載入 6 筆交易記錄
+2025-08-13 20:01:53,117 - trading.backtest_engine - INFO - 載入 6 筆交易記錄
+2025-08-13 20:01:53,149 - trading.backtest_engine - ERROR - 生成回測報告失敗: name 'param_analysis' is not defined
+2025-08-13 20:02:48,912 - trading.trade_logger - INFO - 交易日誌記錄器初始化完成
+2025-08-13 20:02:48,914 - trading.backtest_engine - INFO - 回測引擎初始化完成
+2025-08-13 20:02:48,921 - trading.backtest_engine - INFO - 載入 6 筆交易記錄
+2025-08-13 20:02:48,973 - trading.backtest_engine - ERROR - 保存回測報告失敗: Object of type Timestamp is not JSON serializable
+2025-08-13 20:02:48,973 - trading.backtest_engine - INFO - 回測報告生成完成
+2025-08-13 20:18:13,249 - trading.trade_logger - INFO - 交易日誌記錄器初始化完成
+2025-08-13 20:18:13,251 - trading.backtest_engine - INFO - 回測引擎初始化完成
+2025-08-13 20:18:13,257 - trading.backtest_engine - INFO - 載入 6 筆交易記錄
+2025-08-13 20:18:14,364 - trading.chart_generator - INFO - 權益曲線圖已保存: logs/charts\equity_curve_20250813_201813.png
+2025-08-13 20:19:18,098 - trading.trade_logger - INFO - 交易日誌記錄器初始化完成
+2025-08-13 20:19:18,422 - trading.chart_generator - INFO - 圖表生成器初始化完成
+2025-08-13 20:19:18,424 - trading.backtest_engine - INFO - 回測引擎初始化完成
+2025-08-13 20:19:18,431 - trading.backtest_engine - INFO - 載入 6 筆交易記錄
+2025-08-13 20:19:18,492 - trading.backtest_engine - ERROR - 保存回測報告失敗: Object of type Timestamp is not JSON serializable
+2025-08-13 20:19:18,493 - trading.backtest_engine - INFO - 開始生成回測圖表...
+2025-08-13 20:19:19,079 - trading.chart_generator - INFO - 權益曲線圖已保存: logs/charts\equity_curve_20250813_201918.png
+2025-08-13 20:19:19,079 - trading.backtest_engine - INFO - 權益曲線圖已生成: logs/charts\equity_curve_20250813_201918.png
+2025-08-13 20:19:19,079 - trading.backtest_engine - INFO - 回測圖表生成完成
+2025-08-13 20:19:19,079 - trading.backtest_engine - INFO - 回測報告生成完成
+2025-08-13 20:20:00,968 - trading.trade_logger - INFO - 交易日誌記錄器初始化完成
+2025-08-13 20:20:01,294 - trading.chart_generator - INFO - 圖表生成器初始化完成
+2025-08-13 20:20:01,296 - trading.backtest_engine - INFO - 回測引擎初始化完成
+2025-08-13 20:20:01,304 - trading.backtest_engine - INFO - 載入 6 筆交易記錄
+2025-08-13 20:20:01,357 - trading.backtest_engine - ERROR - 保存回測報告失敗: Object of type Timestamp is not JSON serializable
+2025-08-13 20:20:01,358 - trading.backtest_engine - INFO - 開始生成回測圖表...
+2025-08-13 20:20:01,950 - trading.chart_generator - INFO - 權益曲線圖已保存: logs/charts\equity_curve_20250813_202001.png
+2025-08-13 20:20:01,950 - trading.backtest_engine - INFO - 權益曲線圖已生成: logs/charts\equity_curve_20250813_202001.png
+2025-08-13 20:20:01,951 - trading.backtest_engine - INFO - 回測圖表生成完成
+2025-08-13 20:20:01,951 - trading.backtest_engine - INFO - 回測報告生成完成
+2025-08-13 21:13:26,932 - trading.trade_logger - INFO - 交易日誌記錄器初始化完成
+2025-08-13 21:13:26,945 - trading.system_monitor - INFO - 系統監控器初始化完成
+2025-08-13 21:13:27,249 - trading.chart_generator - INFO - 圖表生成器初始化完成
+2025-08-13 21:13:27,250 - trading.backtest_engine - INFO - 回測引擎初始化完成
+2025-08-13 21:13:45,163 - trading.trade_logger - INFO - 交易日誌記錄器初始化完成
+2025-08-13 21:13:45,172 - trading.system_monitor - INFO - 系統監控器初始化完成
+2025-08-13 21:13:45,460 - trading.chart_generator - INFO - 圖表生成器初始化完成
+2025-08-13 21:13:45,462 - trading.backtest_engine - INFO - 回測引擎初始化完成

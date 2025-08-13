@@ -21,6 +21,12 @@ from django.db import transaction
 from trading_api.models import TradingPair, DailyStats, TraderStatus, Position, StrategyCombo, COMBO_MODE_CHOICES, TraderConfig, VolatilityPauseStatus
 from trading_api.admin import CONFIG_FIELD_TYPES
 
+# 導入新開發的功能模組
+from trading.trade_logger import TradeLogger
+from trading.system_monitor import start_system_monitoring, stop_system_monitoring, record_system_error
+from trading.monitoring_dashboard import start_monitoring_dashboard, stop_monitoring_dashboard, get_dashboard_summary
+from trading.backtest_engine import BacktestEngine
+
 # 導入所有單一策略函數
 from strategy.aggressive import (
     strategy_ema3_ema8_crossover,
@@ -292,7 +298,21 @@ class MultiSymbolTrader:
             trading_pair_instance, created = TradingPair.objects.get_or_create(symbol=symbol)
             if not created: # 如果是已存在的 TradingPair
                 self.last_trade_time[symbol] = trading_pair_instance.last_trade_time
-                # 這裡可以載入其他 TradingPair 的配置，例如 consecutive_stop_loss
+
+        # 初始化新開發的功能模組
+        self.trade_logger = TradeLogger()
+        self.backtest_engine = BacktestEngine()
+        
+        # 啟動系統監控和監控告警
+        try:
+            start_system_monitoring()
+            start_monitoring_dashboard()
+            logging.info("系統監控和監控告警已啟動")
+        except Exception as e:
+            logging.error(f"啟動系統監控失敗: {e}")
+            record_system_error("SYSTEM_STARTUP", str(e), "HIGH", "MultiSymbolTrader")
+        
+        logging.info("MultiSymbolTrader 初始化完成")
 
         # 載入 TraderStatus
         try:
@@ -876,7 +896,29 @@ class MultiSymbolTrader:
                         continue
 
                     side = SIDE_BUY if signal == 1 else SIDE_SELL
-                    self.place_order(symbol, side, final_qty)
+                    order = self.place_order(symbol, side, final_qty)
+                    
+                    # 記錄交易日誌
+                    if order:
+                        try:
+                            # 獲取當前價格作為成交價
+                            current_price = self.get_current_price(symbol)
+                            # 記錄訂單創建，使用實例變數的組合模式
+                            self.trade_logger.log_order_created(
+                                symbol=symbol,
+                                side=side,
+                                quantity=final_qty,
+                                price=current_price,
+                                strategy_name=f"combo_{self.active_combo_mode}",
+                                order_id=order.get('id', f"order_{int(time.time()*1000)}"),
+                                exchange_order_id=order.get('id', ''),
+                                internal_order_id=f"internal_{int(time.time()*1000)}"
+                            )
+                            logging.info(f"{symbol} 交易日誌已記錄")
+                        except Exception as e:
+                            logging.error(f"記錄交易日誌失敗: {e}")
+                            record_system_error("TRADE_LOGGING", str(e), "MEDIUM", "MultiSymbolTrader")
+                    
                     trader_status.hourly_trade_count += 1
                     trader_status.daily_trade_count += 1
                     trader_status.save()
@@ -1099,7 +1141,31 @@ class MultiSymbolTrader:
 
         if exit_triggered:
             with transaction.atomic(): # 使用事務確保數據一致性
-                self.close_position(symbol, qty)
+                # 記錄平倉前的倉位信息
+                exit_order = self.close_position(symbol, qty)
+                
+                # 記錄平倉交易日誌
+                if exit_order:
+                    try:
+                        # 計算實際盈虧
+                        realized_pnl = pnl
+                        # 記錄平倉
+                        self.trade_logger.log_order_created(
+                            symbol=symbol,
+                            side="CLOSE",
+                            quantity=qty,
+                            price=price,
+                            strategy_name=f"exit_{exit_reason}",
+                            order_id=exit_order.get('id', f"exit_{int(time.time()*1000)}"),
+                            exchange_order_id=exit_order.get('id', ''),
+                            internal_order_id=f"exit_internal_{int(time.time()*1000)}",
+                            realized_pnl=realized_pnl,
+                            exit_reason=exit_reason
+                        )
+                        logging.info(f"{symbol} 平倉交易日誌已記錄，原因: {exit_reason}")
+                    except Exception as e:
+                        logging.error(f"記錄平倉交易日誌失敗: {e}")
+                        record_system_error("EXIT_TRADE_LOGGING", str(e), "MEDIUM", "MultiSymbolTrader")
                 
                 # 更新 DailyStats 的 pnl
                 daily_stats_obj = DailyStats.objects.get(trading_pair=trading_pair_obj, date=timezone.localdate())
@@ -1352,3 +1418,20 @@ class MultiSymbolTrader:
         except Exception as e:
             logging.error(f"檢查最大持倉數量限制時發生錯誤: {e}")
             return True  # 發生錯誤時允許開倉，避免過度限制
+
+    def cleanup(self):
+        """
+        清理資源，關閉監控服務
+        """
+        try:
+            stop_system_monitoring()
+            stop_monitoring_dashboard()
+            logging.info("系統監控和監控告警已停止")
+        except Exception as e:
+            logging.error(f"停止系統監控失敗: {e}")
+
+    def __del__(self):
+        """
+        析構函數，確保資源被正確清理
+        """
+        self.cleanup()

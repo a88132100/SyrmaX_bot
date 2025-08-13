@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import TraderConfig, TradingPair, Position, Trade, DailyStats, TraderStatus, StrategyCombo
+from .models import TraderConfig, TradingPair, Position, Trade, DailyStats, TraderStatus, VolatilityPauseStatus, StrategyCombo
 
 class TraderConfigSerializer(serializers.ModelSerializer):
     class Meta:
@@ -35,6 +35,13 @@ class DailyStatsSerializer(serializers.ModelSerializer):
 class TraderStatusSerializer(serializers.ModelSerializer):
     class Meta:
         model = TraderStatus
+        fields = '__all__'
+
+class VolatilityPauseStatusSerializer(serializers.ModelSerializer):
+    trading_pair_symbol = serializers.CharField(source='trading_pair.symbol', read_only=True)
+    
+    class Meta:
+        model = VolatilityPauseStatus
         fields = '__all__'
 
 class StrategyComboSerializer(serializers.ModelSerializer):

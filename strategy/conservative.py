@@ -126,8 +126,10 @@ class Ichimoku_Cloud(BaseStrategy):
         cloud_top = max(senkou_a, senkou_b)
         cloud_bot = min(senkou_a, senkou_b)
         close = df["close"].iloc[-1]
-        cross_up   = tenkan > kijun and tenkan.iloc[-2] <= kijun.iloc[-2]
-        cross_down = tenkan < kijun and tenkan.iloc[-2] >= kijun.iloc[-2]
+        # 修復：檢查前一根K線的交叉情況
+        tenkan_prev, kijun_prev = df["tenkan"].iloc[-2], df["kijun"].iloc[-2]
+        cross_up   = tenkan > kijun and tenkan_prev <= kijun_prev
+        cross_down = tenkan < kijun and tenkan_prev >= kijun_prev
         if cross_up and close > cloud_top:
             return [self._make(df, 1)]
         if cross_down and close < cloud_bot:

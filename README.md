@@ -81,6 +81,27 @@
 - PostgreSQL 12+ (推薦)
 - Redis 6+ (快取)
 
+### 🆕 新功能依賴
+
+#### Python 庫
+```bash
+# 系統監控
+pip install psutil
+
+# 圖表生成
+pip install matplotlib seaborn
+
+# 數據分析
+pip install pandas numpy
+
+# 已包含在 requirements.txt 中
+```
+
+#### 系統權限
+- **系統監控**：需要讀取系統指標的權限
+- **日誌文件**：需要寫入權限
+- **圖表生成**：需要寫入權限
+
 ### 安裝步驟
 
 #### 1. 克隆專案
@@ -131,13 +152,41 @@ python manage.py createsuperuser
 # 啟動 Django 開發伺服器
 python manage.py runserver
 
-# 啟動交易機器人 (新終端)
+# 啟動交易機器人 (新終端) - 包含所有新功能模組
 python manage.py runbot
+
+# 查看監控儀表板 (新終端)
+python manage.py show_dashboard
 
 # 啟動前端開發伺服器 (新終端)
 cd frontend
 npm install
 npm run dev
+```
+
+### 🆕 新功能使用指南
+
+#### 監控儀表板
+```bash
+# 顯示監控摘要
+python manage.py show_dashboard
+
+# 以JSON格式輸出
+python manage.py show_dashboard --format json
+
+# 導出數據到文件
+python manage.py show_dashboard --export monitoring_data.json
+```
+
+#### API 端點
+```bash
+# 監控告警儀表板
+GET /api/monitoring/dashboard/          # 完整監控數據
+GET /api/monitoring/system-health/      # 系統健康狀態
+GET /api/monitoring/alerts/             # 告警摘要
+GET /api/monitoring/performance/        # 性能指標
+POST /api/monitoring/alerts/acknowledge/ # 確認告警
+POST /api/monitoring/alerts/resolve/    # 解決告警
 ```
 
 ### 訪問應用
@@ -174,6 +223,53 @@ npm run dev
 - **交易歷史**：詳細交易記錄與分析
 - **績效統計**：日/週/月績效報表
 - **系統狀態**：機器人運行狀態監控
+
+### 🆕 新增功能模組 (v1.1.0)
+
+#### 1. 交易日誌模組 📝
+- **完整交易記錄**：記錄所有開倉、平倉、取消、部分成交等狀態
+- **詳細時間戳**：下單時間、成交時間、取消時間的精確記錄
+- **訂單關聯追蹤**：交易所訂單ID、內部訂單ID的完整關聯
+- **成本分析**：交易手續費、滑點成本的詳細記錄
+- **倉位變化追蹤**：開倉、平倉、加倉、減倉的完整歷史
+- **風險指標記錄**：槓桿倍數、保證金使用率等風險參數
+- **CSV 導出**：自動生成 `logs/trades.csv` 文件，支援後續分析
+
+#### 2. 回測引擎與分析 📊
+- **策略性能指標**：勝率、盈虧比、最大回撤、夏普比率、索提諾比率
+- **風險指標分析**：VaR、最大單筆虧損、連續虧損次數、風險調整收益
+- **市場環境分析**：波動率分析、趨勢強度、市場情緒、市場狀態分類
+- **參數敏感性分析**：不同參數對策略表現的影響評估
+- **策略組合分析**：多策略協同效應、相關性分析、組合優化建議
+- **圖表生成**：自動生成權益曲線、回撤分析圖表
+- **報告導出**：JSON 格式的完整回測報告
+
+#### 3. 系統監控與錯誤處理 🚨
+- **系統健康監控**：CPU、內存、網絡、磁盤使用率的實時監控
+- **外部依賴監控**：交易所API狀態、網絡連接狀態、數據庫連接狀態
+- **業務邏輯監控**：策略執行狀態、數據更新頻率、交易流程監控
+- **自動恢復策略**：不同錯誤類型的智能處理和自動恢復
+- **人工干預觸發**：嚴重錯誤的自動通知和人工介入機制
+- **錯誤分類系統**：LOW、MEDIUM、HIGH、CRITICAL 四個嚴重等級
+- **歷史記錄追蹤**：完整的錯誤歷史和處理記錄
+
+#### 4. 監控告警與性能分析儀表板 📈
+- **實時監控儀表板**：系統狀態、性能指標、錯誤統計的即時展示
+- **智能告警系統**：基於規則的告警觸發，支援冷卻期和狀態管理
+- **性能分析工具**：響應時間、吞吐量、資源使用率的深度分析
+- **趨勢分析**：系統性能的歷史趨勢分析和預測
+- **容量規劃**：基於歷史數據的資源需求預測和擴展建議
+- **告警管理**：告警確認、解決、過期的完整生命週期管理
+- **多級別告警**：INFO、WARNING、CRITICAL、EMERGENCY 四個告警級別
+
+### 🔧 功能整合狀態
+
+所有新功能模組已完全整合到主機器人系統中：
+
+- ✅ **自動啟動**：機器人啟動時自動啟用所有監控和日誌功能
+- ✅ **無縫整合**：與現有交易邏輯完全兼容，無需額外配置
+- ✅ **Django 後台**：通過 Django 管理命令和 API 端點提供完整訪問
+- ✅ **實時監控**：所有監控數據實時更新，支援歷史趨勢分析
 
 ## 🔧 配置說明
 
@@ -312,15 +408,31 @@ SyrmaX_bot/
 │   ├── trader.py         # 主要交易邏輯
 │   ├── constants.py      # 常數定義
 │   ├── config_manager.py # 配置管理
-│   └── testnet_handler.py # 測試網處理
+│   ├── testnet_handler.py # 測試網處理
+│   ├── trade_logger.py   # 🆕 交易日誌模組
+│   ├── backtest_engine.py # 🆕 回測引擎
+│   ├── system_monitor.py # 🆕 系統監控
+│   ├── monitoring_dashboard.py # 🆕 監控告警儀表板
+│   └── chart_generator.py # 🆕 圖表生成器
 ├── trading_api/          # Django API
 │   ├── models.py         # 資料模型
 │   ├── views.py          # API 視圖
 │   ├── serializers.py    # 序列化器
-│   └── urls.py           # URL 路由
+│   ├── urls.py           # URL 路由
+│   └── management/       # 🆕 Django 管理命令
+│       └── commands/
+│           ├── runbot.py # 啟動機器人
+│           └── show_dashboard.py # 顯示監控儀表板
+├── logs/                 # 🆕 日誌和數據文件
+│   ├── trades.csv        # 交易記錄
+│   ├── trading.log       # 系統日誌
+│   ├── backtest_results/ # 回測報告
+│   └── charts/           # 生成的圖表
 ├── docs/                 # 文檔
 │   ├── database_evaluation.md
-│   └── frontend_architecture.md
+│   ├── frontend_architecture.md
+│   ├── 功能整合完成報告.md # 🆕 新功能整合報告
+│   └── 項目1-4完成報告/   # 🆕 各項目詳細報告
 └── frontend/             # React 前端 (待開發)
 ```
 
@@ -400,6 +512,15 @@ python manage.py test --settings=syrmax_api.test_settings
 - 監控系統日誌
 
 ## 📝 更新日誌
+
+### v1.1.0 (2024-08-13) 🆕
+- ✅ **交易日誌模組**：完整的交易記錄和追蹤系統
+- ✅ **回測引擎**：策略性能分析和圖表生成
+- ✅ **系統監控**：實時系統健康監控和錯誤處理
+- ✅ **監控告警儀表板**：智能告警和性能分析系統
+- ✅ **功能整合**：所有新功能無縫整合到主系統
+- ✅ **Django 管理命令**：便捷的命令行監控工具
+- ✅ **API 端點**：完整的監控數據 REST API
 
 ### v1.0.0 (2024-01-XX)
 - ✅ 完成核心交易功能

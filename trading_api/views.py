@@ -1,9 +1,14 @@
 from django.shortcuts import render
-from rest_framework import viewsets, mixins
+from django.http import JsonResponse
+from django.views.decorators.csrf import csrf_exempt
+from django.views.decorators.http import require_http_methods
+from rest_framework.decorators import api_view, action
 from rest_framework.response import Response
-from rest_framework.decorators import action
-from .models import TraderConfig, TradingPair, Position, Trade, DailyStats, TraderStatus, StrategyCombo
-from .serializers import TraderConfigSerializer, TradingPairSerializer, PositionSerializer, TradeSerializer, DailyStatsSerializer, TraderStatusSerializer, StrategyComboSerializer
+from rest_framework import status, viewsets
+import json
+
+from .models import TraderConfig, TradingPair, Position, Trade, DailyStats, TraderStatus, VolatilityPauseStatus, StrategyCombo
+from .serializers import TraderConfigSerializer, TradingPairSerializer, PositionSerializer, TradeSerializer, DailyStatsSerializer, TraderStatusSerializer, VolatilityPauseStatusSerializer, StrategyComboSerializer
 
 # Create your views here.
 
@@ -63,3 +68,108 @@ class StrategyComboViewSet(viewsets.ModelViewSet):
     """
     queryset = StrategyCombo.objects.all()
     serializer_class = StrategyComboSerializer
+
+@api_view(['GET'])
+def monitoring_dashboard(request):
+    """監控儀表板視圖"""
+    try:
+        from trading.monitoring_dashboard import get_dashboard_summary
+        summary = get_dashboard_summary()
+        return Response(summary)
+    except Exception as e:
+        return Response(
+            {'error': f'獲取監控數據失敗: {str(e)}'}, 
+            status=status.HTTP_500_INTERNAL_SERVER_ERROR
+        )
+
+@api_view(['GET'])
+def system_health(request):
+    """系統健康狀態視圖"""
+    try:
+        from trading.monitoring_dashboard import get_dashboard_summary
+        summary = get_dashboard_summary()
+        system_health = summary.get('system_health', {})
+        return Response(system_health)
+    except Exception as e:
+        return Response(
+            {'error': f'獲取系統健康狀態失敗: {str(e)}'}, 
+            status=status.HTTP_500_INTERNAL_SERVER_ERROR
+        )
+
+@api_view(['GET'])
+def alert_summary(request):
+    """告警摘要視圖"""
+    try:
+        from trading.monitoring_dashboard import get_dashboard_summary
+        summary = get_dashboard_summary()
+        alert_summary = summary.get('alert_summary', {})
+        return Response(alert_summary)
+    except Exception as e:
+        return Response(
+            {'error': f'獲取告警摘要失敗: {str(e)}'}, 
+            status=status.HTTP_500_INTERNAL_SERVER_ERROR
+        )
+
+@api_view(['GET'])
+def performance_metrics(request):
+    """性能指標視圖"""
+    try:
+        from trading.monitoring_dashboard import get_dashboard_summary
+        summary = get_dashboard_summary()
+        current_metrics = summary.get('current_metrics', {})
+        performance_analysis = summary.get('performance_analysis', {})
+        return Response({
+            'current_metrics': current_metrics,
+            'performance_analysis': performance_analysis
+        })
+    except Exception as e:
+        return Response(
+            {'error': f'獲取性能指標失敗: {str(e)}'}, 
+            status=status.HTTP_500_INTERNAL_SERVER_ERROR
+        )
+
+@api_view(['POST'])
+def acknowledge_alert(request):
+    """確認告警"""
+    try:
+        from trading.monitoring_dashboard import acknowledge_alert
+        data = request.data
+        rule_id = data.get('rule_id')
+        user = data.get('user', 'admin')
+        
+        if not rule_id:
+            return Response(
+                {'error': '缺少 rule_id 參數'}, 
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        acknowledge_alert(rule_id, user)
+        return Response({'message': f'告警 {rule_id} 已確認'})
+    except Exception as e:
+        return Response(
+            {'error': f'確認告警失敗: {str(e)}'}, 
+            status=status.HTTP_500_INTERNAL_SERVER_ERROR
+        )
+
+@api_view(['POST'])
+def resolve_alert(request):
+    """解決告警"""
+    try:
+        from trading.monitoring_dashboard import resolve_alert
+        data = request.data
+        rule_id = data.get('rule_id')
+        user = data.get('user', 'admin')
+        
+        if not rule_id:
+            return Response(
+                {'error': '缺少 rule_id 參數'}, 
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        resolve_alert(rule_id, user)
+        return Response({'message': f'告警 {rule_id} 已解決'})
+    except Exception as e:
+        return Response(
+            {'error': f'解決告警失敗: {str(e)}'}, 
+            status=status.HTTP_500_INTERNAL_SERVER_ERROR
+        )

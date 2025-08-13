@@ -1,0 +1,43 @@
+{
+  "summary": {
+    "trading_pair": "ALL",
+    "period_start": "2025-08-13T12:01:53.002525+00:00",
+    "period_end": "2025-08-13T12:01:53.004596+00:00",
+    "total_trades": 6,
+    "total_pnl": 58.0,
+    "win_rate": 100.0,
+    "sharpe_ratio": 24.72892577218287
+  },
+  "strategy_performance": {
+    "total_trades": 6,
+    "winning_trades": 6,
+    "losing_trades": 0,
+    "break_even_trades": 0,
+    "win_rate": 100.0,
+    "loss_rate": 0.0,
+    "total_pnl": 58.0,
+    "total_profit": 58.0,
+    "total_loss": 0.0,
+    "average_profit": 9.666666666666666,
+    "average_loss": 0,
+    "profit_factor": Infinity,
+    "max_drawdown": 0.0,
+    "max_drawdown_pct": 0.0,
+    "max_single_loss": 1.0,
+    "max_single_profit": 20.0,
+    "consecutive_losses": 0,
+    "max_consecutive_losses": 0,
+    "sharpe_ratio": 24.72892577218287,
+    "sortino_ratio": Infinity,
+    "calmar_ratio": 0.0,
+    "var_95": 0.02442307692307693,
+    "var_99": 0.020269230769230772,
+    "avg_trade_duration": 0.015994166666666667,
+    "total_trading_days": 1,
+    "annualized_return": 21170.0,
+    "strategy_efficiency": 0,
+    "signal_accuracy": 0.5499999999999999
+  },
+  "market_environment": {
+    "trading_pair": "BTCUSDT",
+    "period_start": 
