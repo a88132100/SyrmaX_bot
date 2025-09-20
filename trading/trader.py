@@ -18,14 +18,21 @@ from strategy.base import evaluate_bundles, strategy_bundles
 from trading.utils import get_precision
 from django.utils import timezone
 from django.db import transaction
-from trading_api.models import TradingPair, DailyStats, TraderStatus, Position, StrategyCombo, COMBO_MODE_CHOICES, TraderConfig, VolatilityPauseStatus
+from trading_api.models import (
+    TraderConfig, TradingPair, DailyStats, TraderStatus, 
+    Position, StrategyCombo, VolatilityPauseStatus
+)
 from trading_api.admin import CONFIG_FIELD_TYPES
 
 # 導入新開發的功能模組
 from trading.trade_logger import TradeLogger
+from trading.system_monitor import SystemMonitor
+from trading.monitoring_dashboard import MonitoringDashboard
+from trading.backtest_engine import BacktestEngine
+
+# 導入可能需要的函數
 from trading.system_monitor import start_system_monitoring, stop_system_monitoring, record_system_error
 from trading.monitoring_dashboard import start_monitoring_dashboard, stop_monitoring_dashboard, get_dashboard_summary
-from trading.backtest_engine import BacktestEngine
 
 # 導入所有單一策略函數
 from strategy.aggressive import (
@@ -148,52 +155,108 @@ class MultiSymbolTrader:
     """
     支援多幣種的自動交易機器人類別
     """
-    def __init__(self):
-        # 新增 get_config 方法來從數據庫讀取配置
-        self.configs = {} # 用於緩存已讀取的配置，避免重複查詢
-
-        # 載入所有 TraderConfig 到緩存
+    def __init__(self, api_key: str, api_secret: str, testnet: bool = False):
+        """
+        初始化多幣種交易機器人
+        """
+        # 初始化配置緩存
+        self.configs = {}
+        
+        # 初始化基本屬性
+        self.enable_trade_limits = True
+        self.max_positions = 5
+        self.min_balance = 100
+        self.max_daily_loss = 500
+        self.max_daily_trades = 50
+        self.test_mode = testnet  # 根據傳入的testnet參數設置測試模式
+        self.simulation_mode = False  # 模擬交易模式，將從配置中讀取
+        
+        # 載入配置
         self._load_all_configs()
-
-        # 決定使用哪個交易所客戶端 (從數據庫讀取)
-        exchange_name = self.get_config('EXCHANGE_NAME', default='binance_usdm')
-        api_key = self.get_config('API_KEY', default='')
-        api_secret = self.get_config('API_SECRET', default='')
-        use_testnet = self.get_config('USE_TESTNET', type=bool, default=False)
-
-        self.client = load_exchange_client(exchange_name, api_key, api_secret, use_testnet)
-
-        # 初始化 MultiSymbolTrader 的模擬模式狀態 (從數據庫讀取)
-        self.test_mode = self.get_config('TEST_MODE', type=bool, default=False)
-
-        # 交易次數限制開關，預設為啟用
-        self.enable_trade_limits = self.get_config('ENABLE_TRADE_LIMITS', type=bool, default=True)
-
+        
+        # 從配置讀取模擬交易模式
+        logging.info("正在讀取 TEST_MODE 配置...")
+        self.simulation_mode = self.get_config('TEST_MODE', type=bool, default=False)
+        logging.info(f"模擬交易模式: {'開啟' if self.simulation_mode else '關閉'}")
+        logging.info(f"simulation_mode 變數值: {self.simulation_mode} (類型: {type(self.simulation_mode)})")
+        
+        # 從配置讀取交易所名稱
+        exchange_name = self.get_config('EXCHANGE_NAME', default='BINANCE')
+        
+        # 初始化交易所客戶端
+        self.client = load_exchange_client(exchange_name, api_key, api_secret, testnet)
+        
+        # 初始化各個模組
+        self.trade_logger = TradeLogger()
+        self.backtest_engine = BacktestEngine()
+        self.system_monitor = SystemMonitor()
+        self.monitoring_dashboard = MonitoringDashboard()
+        
+        # 初始化稽核層
+        try:
+            from core.audit_integration import AuditIntegration
+            self.audit_integration = AuditIntegration(self)
+            if self.audit_integration.is_enabled():
+                logging.info("稽核層已啟用")
+            else:
+                logging.info("稽核層已禁用")
+        except Exception as e:
+            logging.error(f"稽核層初始化失敗: {e}")
+            self.audit_integration = None
+        
         # 從數據庫讀取交易對和槓桿
         self.symbols = self.get_config('SYMBOLS', type=list, default=[])
         self.leverage = self.get_config('LEVERAGE', type=int, default=10)
         
+        # 添加幣種配置檢查日誌
+        logging.info(f"=== 幣種配置檢查 ===")
+        logging.info(f"從數據庫讀取的SYMBOLS配置: {self.symbols}")
+        logging.info(f"配置類型: {type(self.symbols)}")
+        logging.info(f"幣種數量: {len(self.symbols) if isinstance(self.symbols, list) else 'N/A'}")
+        
+        if not self.symbols:
+            logging.warning("SYMBOLS配置為空或無效，使用默認幣種")
+            self.symbols = ["BTCUSDT", "ETHUSDT"]
+            logging.info(f"已設置默認幣種: {self.symbols}")
+        elif not isinstance(self.symbols, list):
+            logging.error(f"SYMBOLS配置類型錯誤: {type(self.symbols)}，使用默認幣種")
+            self.symbols = ["BTCUSDT", "ETHUSDT"]
+            logging.info(f"已設置默認幣種: {self.symbols}")
+        
+        logging.info(f"最終使用的幣種列表: {self.symbols}")
+        logging.info(f"=== 幣種配置檢查完成 ===")
+        
+        # 配置自動同步相關變量
+        self.last_config_check = timezone.now()
+        self.config_sync_interval = 300  # 5分鐘檢查一次配置變化
+        self.auto_sync_symbols = self.get_config('AUTO_SYNC_SYMBOLS', type=bool, default=True)
+        
+        if self.auto_sync_symbols:
+            logging.info("✅ 已啟用幣種配置自動同步，每5分鐘檢查一次配置變化")
+        else:
+            logging.info("⚠️ 已關閉幣種配置自動同步，需要手動重啟機器人來應用配置變化")
+        
         # 從配置讀取是否自動設置槓桿
         auto_set_leverage = self.get_config('AUTO_SET_LEVERAGE', type=bool, default=True)
         logging.info(f"[DEBUG] AUTO_SET_LEVERAGE 配置值為: {auto_set_leverage} (型別: {type(auto_set_leverage)})")
+        
         if auto_set_leverage is True:
-            self.set_leverage()
+            logging.info("自動設置槓桿已啟用，將在初始化時設置槓桿")
+            # 注意：這裡不直接調用set_leverage()，而是在初始化完成後調用
         else:
-            logging.info("已關閉自動設置槓桿，啟動時將跳過 set_leverage() 步驟。")
+            logging.info("已關閉自動設置槓桿，啟動時將跳過自動設置槓桿步驟。")
+            logging.info(f"當前配置的槓桿倍數: {self.leverage}x")
+            logging.info("如需手動設置槓桿，請使用 set_leverage() 方法")
 
-        # 與交易所伺服器校時
+        # 與交易所校時
         try:
-            server_time = self.client.time()
-            local_time = int(time.time() * 1000)
-            if server_time is not None:
-                self.time_offset = server_time - local_time
-                logging.info(f"伺服器時間={server_time}, 本地時間={local_time}, 時間差={self.time_offset} ms")
+            if hasattr(self.client, '_sync_time'):
+                self.client._sync_time()
+                logging.info("已與交易所進行時間同步")
             else:
-                self.time_offset = 0
-                logging.warning("無法從交易所獲取伺服器時間，將使用本地時間。")
+                logging.warning("交易所客戶端不支持時間同步，將使用本地時間。")
         except Exception as e:
-            self.time_offset = 0
-            logging.error(f"與交易所校時失敗: {e}，將使用本地時間。")
+            logging.warning(f"與交易所校時失敗: {e}，將使用本地時間。")
        
         # 全局交易判斷頻率
         self.global_interval_seconds = self.get_config('GLOBAL_INTERVAL_SECONDS', type=int, default=3)
@@ -310,9 +373,29 @@ class MultiSymbolTrader:
             logging.info("系統監控和監控告警已啟動")
         except Exception as e:
             logging.error(f"啟動系統監控失敗: {e}")
-            record_system_error("SYSTEM_STARTUP", str(e), "HIGH", "MultiSymbolTrader")
+            from trading.system_monitor import ErrorSeverity
+            record_system_error("SYSTEM_STARTUP", str(e), ErrorSeverity.HIGH, "MultiSymbolTrader")
         
         logging.info("MultiSymbolTrader 初始化完成")
+
+        # 根據配置決定是否設置槓桿
+        auto_set_leverage = self.get_config('AUTO_SET_LEVERAGE', type=bool, default=True)
+        if auto_set_leverage:
+            logging.info("開始自動設置槓桿...")
+            try:
+                # 在測試網環境下，跳過槓桿設置以避免錯誤
+                if self.test_mode:
+                    logging.info("⚠️ 測試網環境檢測到，跳過槓桿設置以避免權限錯誤")
+                    logging.info(f"當前配置槓桿: {self.leverage}x，將在實際交易時使用")
+                else:
+                    self.set_leverage()
+                    logging.info("槓桿設置完成")
+            except Exception as e:
+                logging.error(f"自動設置槓桿失敗: {e}")
+                logging.info("槓桿設置失敗不會影響機器人運行，將在實際交易時使用默認槓桿")
+        else:
+            logging.info(f"跳過自動設置槓桿，當前配置槓桿: {self.leverage}x")
+            logging.info("如需手動設置槓桿，請調用 set_leverage() 方法")
 
         # 載入 TraderStatus
         try:
@@ -378,6 +461,9 @@ class MultiSymbolTrader:
             config_entry = TraderConfig.objects.get(key=key)
             value_str = config_entry.value
             expected_type_str = config_entry.value_type
+            
+            # 添加調試日誌
+            logging.debug(f"獲取配置 '{key}': 值='{value_str}', 類型='{expected_type_str}', 期望類型={type}")
 
             # --- 類型轉換 ---
             value = None
@@ -390,7 +476,9 @@ class MultiSymbolTrader:
                 if isinstance(value_str, bool):
                     value = value_str
                 elif isinstance(value_str, str):
+                    # 修正：只有明確的 true 值才返回 True
                     value = value_str.strip().lower() in ['true', '1', 't', 'y', 'yes']
+                    logging.debug(f"布林值轉換: '{value_str}' -> {value}")
                 else:
                     value = bool(value_str)
             elif expected_type_str == 'list':
@@ -399,9 +487,15 @@ class MultiSymbolTrader:
                     value = json.loads(value_str)
                     if not isinstance(value, list):
                         raise ValueError("JSON 解析結果不是一個列表")
+                    logging.debug(f"成功解析列表配置 '{key}': {value}")
                 except (json.JSONDecodeError, ValueError) as e:
                     logging.error(f"配置鍵 '{key}' 的值 '{value_str}' 無法解析為列表: {e}")
-                    value = default
+                    # 嘗試解析為逗號分隔的字符串
+                    if ',' in value_str:
+                        value = [s.strip() for s in value_str.split(',') if s.strip()]
+                        logging.info(f"將逗號分隔字符串解析為列表: {value}")
+                    else:
+                        value = default
             elif expected_type_str == 'dict':
                  # 解析 JSON 格式的字典
                 try:
@@ -413,6 +507,13 @@ class MultiSymbolTrader:
                     value = default
             else: # 默認為 str
                 value = value_str
+            
+            # 特殊處理SYMBOLS配置
+            if key == 'SYMBOLS':
+                logging.info(f"SYMBOLS配置解析結果: {value} (類型: {type(value)})")
+                if not value or not isinstance(value, list):
+                    logging.warning(f"SYMBOLS配置無效，使用默認值: {default}")
+                    value = default
             
             self.configs[key] = value
             return value
@@ -474,6 +575,26 @@ class MultiSymbolTrader:
         # 在多次失敗後，可以選擇拋出異常或停止機器人
         # raise Exception(f"{symbol} 槓桿設定失敗")
 
+    def manual_set_leverage(self, leverage: int = None):
+        """
+        手動設置槓桿倍數
+        
+        參數:
+            leverage (int): 要設置的槓桿倍數，如果不提供則使用配置中的值
+        """
+        if leverage is not None:
+            self.leverage = leverage
+            logging.info(f"手動設置槓桿為: {leverage}x")
+        
+        logging.info(f"開始手動設置槓桿為 {self.leverage}x...")
+        try:
+            self.set_leverage()
+            logging.info("✅ 手動設置槓桿完成")
+            return True
+        except Exception as e:
+            logging.error(f"手動設置槓桿失敗: {e}")
+            return False
+
     def _get_timestamp(self) -> int:
         """
         回傳與伺服器時間同步後的當前時間（毫秒）
@@ -504,6 +625,7 @@ class MultiSymbolTrader:
     def fetch_historical_klines(self, symbol: str, interval: str = '1m', limit: int = 500) -> pd.DataFrame:
         """
         獲取歷史 K 線數據並轉換為 DataFrame
+        Binance K線數據格式: [timestamp, open, high, low, close, volume, close_time, quote_asset_volume, number_of_trades, taker_buy_base_asset_volume, taker_buy_quote_asset_volume, ignore]
         """
         try:
             # client.fetch_klines 已經有了基本的錯誤處理
@@ -513,7 +635,16 @@ class MultiSymbolTrader:
                 logging.warning(f"{symbol}: 從交易所未獲取到 K 線數據。")
                 return pd.DataFrame()
 
-            df = pd.DataFrame(klines, columns=['timestamp', 'open', 'high', 'low', 'close', 'volume'])
+            # Binance K線數據有12列，我們只需要前6列
+            # 列定義: [timestamp, open, high, low, close, volume, close_time, quote_asset_volume, number_of_trades, taker_buy_base_asset_volume, taker_buy_quote_asset_volume, ignore]
+            df = pd.DataFrame(klines, columns=[
+                'timestamp', 'open', 'high', 'low', 'close', 'volume',
+                'close_time', 'quote_asset_volume', 'number_of_trades', 
+                'taker_buy_base_asset_volume', 'taker_buy_quote_asset_volume', 'ignore'
+            ])
+            
+            # 只保留我們需要的列
+            df = df[['timestamp', 'open', 'high', 'low', 'close', 'volume']]
             
             # 轉換數據類型
             for col in ['open', 'high', 'low', 'close', 'volume']:
@@ -715,7 +846,7 @@ class MultiSymbolTrader:
 
     def place_order(self, symbol: str, side: str, quantity: float):
         """下單並更新倉位狀態"""
-        if self.test_mode:
+        if self.simulation_mode:
             logging.info(f"[模擬] 下單: {side} {quantity} {symbol}")
             # 模擬訂單回傳
             mock_order = {
@@ -769,6 +900,10 @@ class MultiSymbolTrader:
         """
         主策略運行邏輯：每個幣種檢查 → 產生信號 → 下單或平倉
         """
+        # 🔍 檢查並同步配置變化
+        if self.auto_sync_symbols:
+            self.check_and_sync_configs()
+        
         trader_status = TraderStatus.objects.get(pk=1) # 獲取交易器狀態
 
         # 每小時重置交易計數
@@ -805,7 +940,7 @@ class MultiSymbolTrader:
             if self.enable_trade_limits:
                 if (trader_status.hourly_trade_count >= self.max_trades_per_hour or
                     trader_status.daily_trade_count >= self.max_trades_per_day):
-                    logging.info("已達全局開倉次數上限，跳過開倉。")
+                    logging.info(f"已達全局開倉次數上限 (每小時: {trader_status.hourly_trade_count}/{self.max_trades_per_hour}, 每日: {trader_status.daily_trade_count}/{self.max_trades_per_day})，跳過開倉。")
                     continue
             
             try:
@@ -866,10 +1001,11 @@ class MultiSymbolTrader:
                     pass
                 else:
                     # 沒有持倉，生成開倉信號
-                    if (trader_status.hourly_trade_count >= self.max_trades_per_hour or
-                        trader_status.daily_trade_count >= self.max_trades_per_day):
-                        logging.info("已達全局開倉次數上限，跳過開倉。")
-                        continue
+                    # 重複檢查已在上方進行，這裡移除重複檢查
+                    # if (trader_status.hourly_trade_count >= self.max_trades_per_hour or
+                    #     trader_status.daily_trade_count >= self.max_trades_per_day):
+                    #     logging.info("已達全局開倉次數上限，跳過開倉。")
+                    #     continue
                     
                     # 檢查最大同時持倉數量限制
                     if not self.check_max_position_limit():
@@ -879,6 +1015,16 @@ class MultiSymbolTrader:
                     signal = self.generate_signal(df) # 這裡使用 generate_signal，它會根據組合模式來執行
                     if signal == 0:
                         continue
+                    
+                    # 稽核層處理信號
+                    if hasattr(self, 'audit_integration') and self.audit_integration:
+                        audit_result = self.audit_integration.process_trading_signal(
+                            signal, symbol, df, f"combo_{self.active_combo_mode}"
+                        )
+                        if not audit_result['approved']:
+                            logging.info(f"{symbol} 稽核層拒絕信號: {audit_result['reason']}")
+                            continue
+                        signal = audit_result['signal']  # 使用稽核後的信號
 
                     price = df['close'].iloc[-1]
                     if price is None:
@@ -896,6 +1042,20 @@ class MultiSymbolTrader:
                         continue
 
                     side = SIDE_BUY if signal == 1 else SIDE_SELL
+                    
+                    # 記錄訂單提交事件
+                    if hasattr(self, 'audit_integration') and self.audit_integration:
+                        order_data = {
+                            'order_id': f"order_{int(time.time()*1000)}",
+                            'side': side,
+                            'quantity': final_qty,
+                            'price': price,
+                            'order_type': 'market',
+                            'strategy_id': f"combo_{self.active_combo_mode}",
+                            'idempotency_key': f"{symbol}_{side}_{int(time.time())}"
+                        }
+                        self.audit_integration.log_order_event("submitted", order_data, symbol)
+                    
                     order = self.place_order(symbol, side, final_qty)
                     
                     # 記錄交易日誌
@@ -903,21 +1063,50 @@ class MultiSymbolTrader:
                         try:
                             # 獲取當前價格作為成交價
                             current_price = self.get_current_price(symbol)
+                            
+                            # 記錄稽核層訂單成交事件
+                            if hasattr(self, 'audit_integration') and self.audit_integration:
+                                filled_data = {
+                                    'order_id': order.get('id', f"order_{int(time.time()*1000)}"),
+                                    'side': side,
+                                    'filled_quantity': final_qty,
+                                    'filled_price': current_price,
+                                    'commission': 0.0,  # 簡化處理
+                                    'slippage': 0.0,    # 簡化處理
+                                    'strategy_id': f"combo_{self.active_combo_mode}",
+                                    'idempotency_key': f"{symbol}_{side}_{int(time.time())}"
+                                }
+                                self.audit_integration.log_order_event("filled", filled_data, symbol)
+                            
                             # 記錄訂單創建，使用實例變數的組合模式
-                            self.trade_logger.log_order_created(
-                                symbol=symbol,
+                            from trading.trade_logger import log_order_created
+                            log_order_created(
+                                trading_pair=symbol,
+                                strategy_name=f"combo_{self.active_combo_mode}",
+                                combo_mode=self.active_combo_mode,
+                                order_id=order.get('id', f"order_{int(time.time()*1000)}"),
                                 side=side,
                                 quantity=final_qty,
-                                price=current_price,
-                                strategy_name=f"combo_{self.active_combo_mode}",
-                                order_id=order.get('id', f"order_{int(time.time()*1000)}"),
-                                exchange_order_id=order.get('id', ''),
-                                internal_order_id=f"internal_{int(time.time()*1000)}"
+                                entry_price=current_price
                             )
                             logging.info(f"{symbol} 交易日誌已記錄")
                         except Exception as e:
                             logging.error(f"記錄交易日誌失敗: {e}")
-                            record_system_error("TRADE_LOGGING", str(e), "MEDIUM", "MultiSymbolTrader")
+                            from trading.system_monitor import ErrorSeverity
+                            record_system_error("TRADE_LOGGING", str(e), ErrorSeverity.MEDIUM, "MultiSymbolTrader")
+                    else:
+                        # 訂單失敗，記錄拒絕事件
+                        if hasattr(self, 'audit_integration') and self.audit_integration:
+                            rejected_data = {
+                                'order_id': f"order_{int(time.time()*1000)}",
+                                'side': side,
+                                'rejection_reason': "下單失敗",
+                                'blocked_rules': ["order_failed"],
+                                'risk_level': "HIGH",
+                                'strategy_id': f"combo_{self.active_combo_mode}",
+                                'idempotency_key': f"{symbol}_{side}_{int(time.time())}"
+                            }
+                            self.audit_integration.log_order_event("rejected", rejected_data, symbol)
                     
                     trader_status.hourly_trade_count += 1
                     trader_status.daily_trade_count += 1
@@ -932,18 +1121,44 @@ class MultiSymbolTrader:
         """
         抓取可用餘額，當作當日起始資金（用於每日風控），並更新到 DailyStats 模型
         """
-        balance = self.get_available_usdt_balance()
+        try:
+            balance = self.get_available_usdt_balance()
+        except Exception as e:
+            logging.warning(f"無法獲取餘額，使用默認值: {e}")
+            balance = 1000.0  # 使用默認餘額
+        
         max_daily_loss_pct = self.get_config('MAX_DAILY_LOSS_PCT', type=float, default=0.25)
+        
         for trading_pair_obj in TradingPair.objects.all():
-            daily_stats, created = DailyStats.objects.get_or_create(
-                trading_pair=trading_pair_obj,
-                date=timezone.localdate(),
-                defaults={'start_balance': balance, 'pnl': 0.0, 'max_daily_loss_pct': max_daily_loss_pct}
-            )
-            if not created:
-                daily_stats.start_balance = balance
-                daily_stats.save()
-            logging.info(f"{trading_pair_obj.symbol} 當日起始資金已更新為 {balance:.2f} USDT")
+            try:
+                daily_stats, created = DailyStats.objects.get_or_create(
+                    trading_pair=trading_pair_obj,
+                    date=timezone.localdate(),
+                    defaults={
+                        'start_balance': balance, 
+                        'pnl': 0.0, 
+                        'max_daily_loss_pct': max_daily_loss_pct
+                    }
+                )
+                if not created:
+                    daily_stats.start_balance = balance
+                    daily_stats.max_daily_loss_pct = max_daily_loss_pct  # 確保更新現有記錄
+                    daily_stats.save()
+                logging.info(f"{trading_pair_obj.symbol} 當日起始資金已更新為 {balance:.2f} USDT")
+            except Exception as e:
+                logging.error(f"更新 {trading_pair_obj.symbol} 的 DailyStats 失敗: {e}")
+                # 嘗試手動創建記錄
+                try:
+                    DailyStats.objects.create(
+                        trading_pair=trading_pair_obj,
+                        date=timezone.localdate(),
+                        start_balance=balance,
+                        pnl=0.0,
+                        max_daily_loss_pct=max_daily_loss_pct
+                    )
+                    logging.info(f"{trading_pair_obj.symbol} DailyStats 手動創建成功")
+                except Exception as e2:
+                    logging.error(f"手動創建 {trading_pair_obj.symbol} DailyStats 也失敗: {e2}")
 
     def reset_daily_state(self):
         """
@@ -1150,22 +1365,21 @@ class MultiSymbolTrader:
                         # 計算實際盈虧
                         realized_pnl = pnl
                         # 記錄平倉
-                        self.trade_logger.log_order_created(
-                            symbol=symbol,
+                        from trading.trade_logger import log_order_created
+                        log_order_created(
+                            trading_pair=symbol,
+                            strategy_name=f"exit_{exit_reason}",
+                            combo_mode="exit",
+                            order_id=exit_order.get('id', f"exit_{int(time.time()*1000)}"),
                             side="CLOSE",
                             quantity=qty,
-                            price=price,
-                            strategy_name=f"exit_{exit_reason}",
-                            order_id=exit_order.get('id', f"exit_{int(time.time()*1000)}"),
-                            exchange_order_id=exit_order.get('id', ''),
-                            internal_order_id=f"exit_internal_{int(time.time()*1000)}",
-                            realized_pnl=realized_pnl,
-                            exit_reason=exit_reason
+                            entry_price=price
                         )
                         logging.info(f"{symbol} 平倉交易日誌已記錄，原因: {exit_reason}")
                     except Exception as e:
                         logging.error(f"記錄平倉交易日誌失敗: {e}")
-                        record_system_error("EXIT_TRADE_LOGGING", str(e), "MEDIUM", "MultiSymbolTrader")
+                        from trading.system_monitor import ErrorSeverity
+                        record_system_error("EXIT_TRADE_LOGGING", str(e), ErrorSeverity.MEDIUM, "MultiSymbolTrader")
                 
                 # 更新 DailyStats 的 pnl
                 daily_stats_obj = DailyStats.objects.get(trading_pair=trading_pair_obj, date=timezone.localdate())
@@ -1429,9 +1643,174 @@ class MultiSymbolTrader:
             logging.info("系統監控和監控告警已停止")
         except Exception as e:
             logging.error(f"停止系統監控失敗: {e}")
+            
+        # 停止稽核層
+        try:
+            if hasattr(self, 'audit_integration') and self.audit_integration:
+                self.audit_integration.stop()
+                logging.info("稽核層已停止")
+        except Exception as e:
+            logging.error(f"停止稽核層失敗: {e}")
 
     def __del__(self):
         """
         析構函數，確保資源被正確清理
         """
         self.cleanup()
+
+    def check_and_sync_configs(self):
+        """
+        檢查並同步配置變化，特別是SYMBOLS配置
+        """
+        try:
+            current_time = timezone.now()
+            time_since_last_check = (current_time - self.last_config_check).total_seconds()
+            
+            # 每5分鐘檢查一次配置
+            if time_since_last_check < self.config_sync_interval:
+                return
+            
+            logging.info("🔍 開始檢查配置變化...")
+            
+            # 檢查SYMBOLS配置是否有變化
+            new_symbols = self.get_config('SYMBOLS', type=list, default=[])
+            
+            if new_symbols != self.symbols:
+                logging.info(f"📝 檢測到SYMBOLS配置變化:")
+                logging.info(f"   舊配置: {self.symbols}")
+                logging.info(f"   新配置: {new_symbols}")
+                
+                # 找出新增和刪除的幣種
+                added_symbols = [s for s in new_symbols if s not in self.symbols]
+                removed_symbols = [s for s in self.symbols if s not in new_symbols]
+                
+                if added_symbols:
+                    logging.info(f"➕ 新增幣種: {added_symbols}")
+                    # 為新增幣種初始化相關數據結構
+                    for symbol in added_symbols:
+                        self._initialize_symbol_data(symbol)
+                
+                if removed_symbols:
+                    logging.info(f"➖ 移除幣種: {removed_symbols}")
+                    # 清理移除幣種的相關數據
+                    for symbol in removed_symbols:
+                        self._cleanup_symbol_data(symbol)
+                
+                # 更新幣種列表
+                self.symbols = new_symbols
+                logging.info(f"✅ 幣種配置已同步更新: {self.symbols}")
+                
+                # 更新相關配置
+                self._update_symbol_related_configs()
+                
+            else:
+                logging.debug("✅ SYMBOLS配置無變化")
+            
+            # 檢查其他重要配置
+            new_leverage = self.get_config('LEVERAGE', type=int, default=10)
+            if new_leverage != self.leverage:
+                logging.info(f"📝 檢測到槓桿配置變化: {self.leverage}x -> {new_leverage}x")
+                self.leverage = new_leverage
+                # 可以選擇是否自動重新設置槓桿
+                if self.get_config('AUTO_SET_LEVERAGE', type=bool, default=True):
+                    logging.info("🔄 自動重新設置槓桿...")
+                    self.set_leverage()
+            
+            self.last_config_check = current_time
+            logging.info("✅ 配置檢查完成")
+            
+        except Exception as e:
+            logging.error(f"❌ 配置同步檢查失敗: {e}")
+    
+    def _initialize_symbol_data(self, symbol: str):
+        """
+        為新增的幣種初始化相關數據結構
+        """
+        try:
+            # 初始化波動率暫停狀態
+            self.volatility_pause_status[symbol] = {
+                'is_paused': False,
+                'pause_start_time': None,
+                'pause_reason': None,
+                'current_atr_ratio': 1.0
+            }
+            
+            # 初始化每日風控統計
+            self.daily_stats[symbol] = {
+                'pnl': 0.0,
+                'start_balance': 0.0,
+                'max_daily_loss_pct': self.get_config('MAX_DAILY_LOSS_PCT', type=float, default=0.25),
+                'risk_reward_ratio': 0.4
+            }
+            
+            # 初始化持倉狀態
+            self.positions[symbol] = {
+                'active': False,
+                'side': None,
+                'entry_price': None,
+                'quantity': 0.0,
+            }
+            
+            # 初始化其他狀態
+            self.cooldown_flags[symbol] = False
+            self.last_trade_time[symbol] = None
+            
+            logging.info(f"✅ 已為 {symbol} 初始化相關數據結構")
+            
+        except Exception as e:
+            logging.error(f"❌ 初始化 {symbol} 數據結構失敗: {e}")
+    
+    def _cleanup_symbol_data(self, symbol: str):
+        """
+        清理移除幣種的相關數據結構
+        """
+        try:
+            # 清理波動率暫停狀態
+            if symbol in self.volatility_pause_status:
+                del self.volatility_pause_status[symbol]
+            
+            # 清理每日風控統計
+            if symbol in self.daily_stats:
+                del self.daily_stats[symbol]
+            
+            # 清理持倉狀態
+            if symbol in self.positions:
+                del self.positions[symbol]
+            
+            # 清理其他狀態
+            if symbol in self.cooldown_flags:
+                del self.cooldown_flags[symbol]
+            
+            if symbol in self.last_trade_time:
+                del self.last_trade_time[symbol]
+            
+            logging.info(f"✅ 已清理 {symbol} 的相關數據結構")
+            
+        except Exception as e:
+            logging.error(f"❌ 清理 {symbol} 數據結構失敗: {e}")
+    
+    def _update_symbol_related_configs(self):
+        """
+        更新與幣種相關的配置
+        """
+        try:
+            # 更新SYMBOL_INTERVALS配置
+            intervals_config = self.get_config('SYMBOL_INTERVALS', type=dict, default={})
+            updated_intervals = {}
+            
+            for symbol in self.symbols:
+                updated_intervals[symbol] = intervals_config.get(symbol, '1m')
+            
+            # 如果配置有變化，更新到數據庫
+            if updated_intervals != intervals_config:
+                from trading_api.models import TraderConfig
+                try:
+                    config_obj = TraderConfig.objects.get(key='SYMBOL_INTERVALS')
+                    config_obj.value = json.dumps(updated_intervals, ensure_ascii=False)
+                    config_obj.save()
+                    logging.info(f"✅ 已更新SYMBOL_INTERVALS配置: {updated_intervals}")
+                except TraderConfig.DoesNotExist:
+                    logging.warning("⚠️ SYMBOL_INTERVALS配置不存在，跳過更新")
+            
+        except Exception as e:
+            logging.error(f"❌ 更新幣種相關配置失敗: {e}")

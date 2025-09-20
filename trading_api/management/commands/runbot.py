@@ -43,7 +43,29 @@ class Command(BaseCommand):
 
         trader = None
         try:
-            trader = MultiSymbolTrader()
+            # 從數據庫讀取API配置
+            from trading_api.models import TraderConfig
+            
+            try:
+                api_key_config = TraderConfig.objects.get(key='API_KEY')
+                api_secret_config = TraderConfig.objects.get(key='API_SECRET')
+                use_testnet_config = TraderConfig.objects.get(key='USE_TESTNET')
+                
+                api_key = api_key_config.value
+                api_secret = api_secret_config.value
+                use_testnet = use_testnet_config.value == 'True'
+                
+                logger.info(f"已從數據庫讀取API配置，testnet={use_testnet}")
+                
+            except TraderConfig.DoesNotExist as e:
+                logger.error(f"缺少必要的API配置: {e}")
+                logger.error("請在Django後台的TraderConfig中添加以下配置：")
+                logger.error("- API_KEY: 您的交易所API密鑰")
+                logger.error("- API_SECRET: 您的交易所API密鑰")
+                logger.error("- USE_TESTNET: 是否使用測試網 (True/False)")
+                return
+            
+            trader = MultiSymbolTrader(api_key=api_key, api_secret=api_secret, testnet=use_testnet)
             logger.info("MultiSymbolTrader 初始化完成，所有功能模組已啟動。")
             
             # 顯示系統狀態摘要

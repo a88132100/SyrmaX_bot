@@ -37,6 +37,7 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'corsheaders',  # CORS 支持
     'trading_api',
     'rest_framework',
     'accounts',
@@ -46,6 +47,7 @@ INSTALLED_APPS = [
 ]
 
 MIDDLEWARE = [
+    'corsheaders.middleware.CorsMiddleware',  # CORS 中間件
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
@@ -261,3 +263,26 @@ LOGOUT_REDIRECT_URL = '/api/accounts/auth/login/'
 SOCIAL_AUTH_LOGIN_REDIRECT_URL = '/api/accounts/profile/'
 SOCIAL_AUTH_LOGOUT_REDIRECT_URL = '/api/accounts/auth/login/'
 SOCIAL_AUTH_LOGIN_ERROR_URL = '/api/accounts/auth/login/'
+
+# CORS 配置
+CORS_ALLOWED_ORIGINS = [
+    "http://localhost:5173",  # Vite 開發服務器
+    "http://127.0.0.1:5173",
+]
+
+CORS_ALLOW_CREDENTIALS = True
+
+CORS_ALLOW_ALL_ORIGINS = True  # 開發環境允許所有來源
+
+# 允許的請求頭
+CORS_ALLOW_HEADERS = [
+    'accept',
+    'accept-encoding',
+    'authorization',
+    'content-type',
+    'dnt',
+    'origin',
+    'user-agent',
+    'x-csrftoken',
+    'x-requested-with',
+]

@@ -5,5 +5,12 @@
     "./strategy",
     "./trading",
     "./trading_api"
+  ],
+  "cursorpyright.analysis.extraPaths": [
+    "./",
+    "./combos",
+    "./strategy",
+    "./trading",
+    "./trading_api"
   ]
 }

@@ -1,18 +1,22 @@
 from rest_framework.routers import DefaultRouter
 from django.urls import path
 from . import views
+from . import api_key_views
 
+# 創建路由器
 router = DefaultRouter()
-router.register(r'trader-configs', views.TraderConfigViewSet)
-router.register(r'trading-pairs', views.TradingPairViewSet)
-router.register(r'positions', views.PositionViewSet)
-router.register(r'trades', views.TradeViewSet)
-router.register(r'daily-stats', views.DailyStatsViewSet)
-router.register(r'trader-status', views.TraderStatusViewSet) # 注意這裡的單數形式，因為通常只有一條記錄
-router.register(r'strategy-combos', views.StrategyComboViewSet)
 
-# 監控相關的URL端點
+# API金鑰管理相關的URL端點
 urlpatterns = [
+    # API金鑰管理
+    path('api-keys/', api_key_views.ExchangeAPIKeyListCreateView.as_view(), name='api-key-list'),
+    path('api-keys/<uuid:pk>/', api_key_views.ExchangeAPIKeyDetailView.as_view(), name='api-key-detail'),
+    path('api-keys/<uuid:key_id>/verify/', api_key_views.verify_api_key, name='verify-api-key'),
+    path('api-keys/<uuid:key_id>/test/', api_key_views.test_api_connection, name='test-api-connection'),
+    
+    # 用戶相關
+    path('api-key-summary/', api_key_views.api_key_summary, name='api-key-summary'),
+    
     # 監控告警儀表板
     path('monitoring/dashboard/', views.monitoring_dashboard, name='monitoring_dashboard'),
     path('monitoring/system-health/', views.system_health, name='system_health'),
@@ -22,4 +26,5 @@ urlpatterns = [
     path('monitoring/alerts/resolve/', views.resolve_alert, name='resolve_alert'),
 ]
 
-urlpatterns += router.urls 
+# 添加路由器URL
+urlpatterns += router.urls

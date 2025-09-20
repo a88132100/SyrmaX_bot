@@ -35,6 +35,12 @@ django-extensions==3.2.3
 pytest==7.4.3
 pytest-django==4.7.0
 
+# 稽核層依賴
+pydantic==2.5.0
+fastapi==0.104.1
+uvicorn==0.24.0
+httpx==0.25.2
+
 # 生產環境（可選）
 gunicorn==21.2.0
 whitenoise==6.6.0

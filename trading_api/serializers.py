@@ -1,51 +1,66 @@
 from rest_framework import serializers
-from .models import TraderConfig, TradingPair, Position, Trade, DailyStats, TraderStatus, VolatilityPauseStatus, StrategyCombo
+from django.contrib.auth.models import User
+from .api_key_models import ExchangeAPIKey
+from .models import TradingConfig
 
-class TraderConfigSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = TraderConfig
-        fields = '__all__'
-
-class TradingPairSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = TradingPair
-        fields = '__all__'
-
-class PositionSerializer(serializers.ModelSerializer):
-    trading_pair_symbol = serializers.CharField(source='trading_pair.symbol', read_only=True) # 顯示交易對符號
-
-    class Meta:
-        model = Position
-        fields = '__all__' # 或者指定需要顯示的字段，例如 ['trading_pair_symbol', 'active', 'side', 'entry_price', 'quantity', 'open_time']
-
-class TradeSerializer(serializers.ModelSerializer):
-    trading_pair_symbol = serializers.CharField(source='trading_pair.symbol', read_only=True) # 顯示交易對符號
-
-    class Meta:
-        model = Trade
-        fields = '__all__' # 或者指定需要顯示的字段，例如 ['trading_pair_symbol', 'trade_time', 'side', 'entry_price', 'exit_price', 'quantity', 'pnl', 'reason']
-
-class DailyStatsSerializer(serializers.ModelSerializer):
-    trading_pair_symbol = serializers.CharField(source='trading_pair.symbol', read_only=True) # 顯示交易對符號
-
-    class Meta:
-        model = DailyStats
-        fields = '__all__' # 或者指定需要顯示的字段
-
-class TraderStatusSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = TraderStatus
-        fields = '__all__'
-
-class VolatilityPauseStatusSerializer(serializers.ModelSerializer):
-    trading_pair_symbol = serializers.CharField(source='trading_pair.symbol', read_only=True)
+class ExchangeAPIKeySerializer(serializers.ModelSerializer):
+    """交易所API金鑰序列化器"""
+    
+    masked_key = serializers.CharField(read_only=True)
+    exchange_display = serializers.CharField(source='get_exchange_display', read_only=True)
+    network_display = serializers.CharField(source='get_network_display', read_only=True)
     
     class Meta:
-        model = VolatilityPauseStatus
-        fields = '__all__'
+        model = ExchangeAPIKey
+        fields = [
+            'id', 'exchange', 'network', 'is_active', 'is_verified', 
+            'last_verified', 'can_trade', 'can_withdraw', 'can_read',
+            'created_at', 'updated_at', 'notes', 'masked_key',
+            'exchange_display', 'network_display'
+        ]
+        read_only_fields = ['id', 'created_at', 'updated_at', 'is_verified', 'last_verified']
 
-class StrategyComboSerializer(serializers.ModelSerializer):
+class ExchangeAPIKeyCreateSerializer(serializers.ModelSerializer):
+    """創建API金鑰序列化器"""
+    
     class Meta:
-        model = StrategyCombo
-        fields = '__all__'  # 包含所有欄位
-        # 你也可以只列出需要的欄位，例如：['id', 'name', 'description', 'conditions', 'combo_mode', 'is_active', 'created_at', 'updated_at'] 
+        model = ExchangeAPIKey
+        fields = [
+            'exchange', 'network', 'api_key', 'api_secret', 'passphrase',
+            'is_active', 'can_trade', 'can_withdraw', 'can_read', 'notes'
+        ]
+    
+    def validate(self, data):
+        """驗證API金鑰數據"""
+        exchange = data.get('exchange')
+        passphrase = data.get('passphrase')
+        
+        # OKX需要passphrase
+        if exchange == 'OKX' and not passphrase:
+            raise serializers.ValidationError("OKX交易所需要提供Passphrase")
+        
+        return data
+
+class TradingConfigSerializer(serializers.ModelSerializer):
+    """交易配置序列化器"""
+    
+    class Meta:
+        model = TradingConfig
+        fields = [
+            'default_exchange', 'default_network', 'default_leverage',
+            'max_position_ratio', 'min_position_ratio', 'max_trades_per_hour',
+            'max_trades_per_day', 'max_daily_loss_percent',
+            'enable_volatility_risk_adjustment', 'volatility_threshold_multiplier',
+            'volatility_pause_threshold', 'volatility_recovery_threshold',
+            'volatility_pause_duration_minutes', 'enable_max_position_limit',
+            'max_simultaneous_positions', 'created_at', 'updated_at'
+        ]
+        read_only_fields = ['created_at', 'updated_at']
+
+class UserSerializer(serializers.ModelSerializer):
+    """用戶序列化器"""
+    
+    class Meta:
+        model = User
+        fields = ['id', 'username', 'email', 'first_name', 'last_name', 'date_joined']
+        read_only_fields = ['id', 'date_joined']
