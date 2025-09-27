@@ -9,7 +9,7 @@ import { HistoryPage } from '@/pages/HistoryPage'
 import { StrategiesPage } from '@/pages/StrategiesPage'
 import { SystemPage } from '@/pages/SystemPage'
 
-// 簡單的登入頁面
+// 現代化登入頁面
 const LoginPage: React.FC = () => {
   const handleLogin = () => {
     // 暫時的登入邏輯 - 直接跳轉到儀表板
@@ -17,52 +17,55 @@ const LoginPage: React.FC = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-600 via-purple-600 to-purple-800 flex items-center justify-center p-4">
-      <div className="bg-white dark:bg-gray-900 rounded-2xl shadow-2xl w-full max-w-md p-8">
+    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 flex items-center justify-center p-4 relative overflow-hidden">
+      {/* 背景裝飾 */}
+      <div className="absolute inset-0 bg-[url('data:image/svg+xml,%3Csvg%20width%3D%2260%22%20height%3D%2260%22%20viewBox%3D%220%200%2060%2060%22%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%3E%3Cg%20fill%3D%22none%22%20fill-rule%3D%22evenodd%22%3E%3Cg%20fill%3D%22%239C92AC%22%20fill-opacity%3D%220.1%22%3E%3Ccircle%20cx%3D%2230%22%20cy%3D%2230%22%20r%3D%222%22/%3E%3C/g%3E%3C/g%3E%3C/svg%3E')] opacity-20"></div>
+      
+      <div className="relative z-10 bg-white/10 backdrop-blur-xl rounded-3xl shadow-2xl w-full max-w-md p-8 border border-white/20">
         <div className="text-center mb-8">
-          <div className="w-16 h-16 mx-auto mb-4 bg-gradient-to-r from-cyan-400 to-purple-500 rounded-2xl flex items-center justify-center">
-            <span className="text-white font-bold text-2xl">SX</span>
+          <div className="w-20 h-20 mx-auto mb-6 bg-gradient-to-br from-blue-500 to-purple-600 rounded-3xl flex items-center justify-center shadow-2xl">
+            <span className="text-white font-bold text-3xl">SX</span>
           </div>
-          <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">
+          <h1 className="text-4xl font-bold bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text text-transparent mb-3">
             SyrmaX
           </h1>
-          <p className="text-gray-600 dark:text-gray-400">
-            智能交易機器人平台
+          <p className="text-white/80 text-lg">
+            智能交易平台
           </p>
         </div>
         
-        <div className="space-y-4">
+        <div className="space-y-6">
           <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+            <label className="block text-sm font-medium text-white/90 mb-3">
               用戶名
             </label>
             <input 
               type="text" 
               placeholder="請輸入用戶名" 
-              className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full px-4 py-4 bg-white/10 border border-white/20 rounded-xl text-white placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-transparent backdrop-blur-sm transition-all duration-200"
             />
           </div>
           
           <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+            <label className="block text-sm font-medium text-white/90 mb-3">
               密碼
             </label>
             <input 
               type="password" 
               placeholder="請輸入密碼" 
-              className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full px-4 py-4 bg-white/10 border border-white/20 rounded-xl text-white placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-transparent backdrop-blur-sm transition-all duration-200"
             />
           </div>
           
           <button 
             onClick={handleLogin}
-            className="w-full bg-gradient-to-r from-cyan-400 to-purple-500 text-white font-semibold py-3 px-4 rounded-lg hover:from-cyan-500 hover:to-purple-600 transition-all duration-200 transform hover:scale-105 active:scale-95"
+            className="w-full bg-gradient-to-r from-blue-500 to-purple-600 text-white font-semibold py-4 px-6 rounded-xl hover:from-blue-600 hover:to-purple-700 transition-all duration-300 transform hover:scale-105 active:scale-95 shadow-lg hover:shadow-xl hover:shadow-blue-500/25"
           >
             登入系統
           </button>
           
-          <div className="text-center p-4 bg-gray-50 dark:bg-gray-800 rounded-lg">
-            <p className="text-sm text-gray-600 dark:text-gray-400">
+          <div className="text-center p-4 bg-white/5 rounded-xl border border-white/10">
+            <p className="text-sm text-white/70">
               💡 登入功能正在開發中，敬請期待！
             </p>
           </div>

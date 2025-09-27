@@ -6543,3 +6543,39 @@ KeyError: "Key 'description' not found in 'CurrentTraderConfigForm'. Choices are
 2025-09-20 19:49:14,782 - trading.chart_generator - INFO - 圖表生成器初始化完成
 2025-09-20 19:49:14,784 - trading.backtest_engine - INFO - 回測引擎初始化完成
 2025-09-20 19:49:44,597 - django.request - WARNING - Not Found: /favicon.ico
+2025-09-26 20:23:35,092 - trading.trade_logger - INFO - 交易日誌記錄器初始化完成
+2025-09-26 20:23:35,125 - trading.system_monitor - INFO - 系統監控器初始化完成
+2025-09-26 20:23:35,129 - trading.monitoring_dashboard - INFO - 添加告警規則: CPU使用率過高
+2025-09-26 20:23:35,129 - trading.monitoring_dashboard - INFO - 添加告警規則: CPU使用率嚴重
+2025-09-26 20:23:35,129 - trading.monitoring_dashboard - INFO - 添加告警規則: 內存使用率過高
+2025-09-26 20:23:35,129 - trading.monitoring_dashboard - INFO - 添加告警規則: 內存使用率嚴重
+2025-09-26 20:23:35,129 - trading.monitoring_dashboard - INFO - 添加告警規則: 磁盤使用率過高
+2025-09-26 20:23:35,129 - trading.monitoring_dashboard - INFO - 添加告警規則: API響應過慢
+2025-09-26 20:23:35,129 - trading.monitoring_dashboard - INFO - 添加告警規則: 錯誤率過高
+2025-09-26 20:23:35,129 - trading.monitoring_dashboard - INFO - 監控告警儀表板初始化完成
+2025-09-26 20:23:35,901 - trading.chart_generator - INFO - 圖表生成器初始化完成
+2025-09-26 20:23:35,903 - trading.backtest_engine - INFO - 回測引擎初始化完成
+2025-09-26 20:45:16,347 - trading.trade_logger - INFO - 交易日誌記錄器初始化完成
+2025-09-26 20:45:16,356 - trading.system_monitor - INFO - 系統監控器初始化完成
+2025-09-26 20:45:16,359 - trading.monitoring_dashboard - INFO - 添加告警規則: CPU使用率過高
+2025-09-26 20:45:16,359 - trading.monitoring_dashboard - INFO - 添加告警規則: CPU使用率嚴重
+2025-09-26 20:45:16,359 - trading.monitoring_dashboard - INFO - 添加告警規則: 內存使用率過高
+2025-09-26 20:45:16,359 - trading.monitoring_dashboard - INFO - 添加告警規則: 內存使用率嚴重
+2025-09-26 20:45:16,359 - trading.monitoring_dashboard - INFO - 添加告警規則: 磁盤使用率過高
+2025-09-26 20:45:16,359 - trading.monitoring_dashboard - INFO - 添加告警規則: API響應過慢
+2025-09-26 20:45:16,359 - trading.monitoring_dashboard - INFO - 添加告警規則: 錯誤率過高
+2025-09-26 20:45:16,359 - trading.monitoring_dashboard - INFO - 監控告警儀表板初始化完成
+2025-09-26 20:45:16,682 - trading.chart_generator - INFO - 圖表生成器初始化完成
+2025-09-26 20:45:16,684 - trading.backtest_engine - INFO - 回測引擎初始化完成
+2025-09-27 20:23:05,316 - trading.trade_logger - INFO - 交易日誌記錄器初始化完成
+2025-09-27 20:23:05,327 - trading.system_monitor - INFO - 系統監控器初始化完成
+2025-09-27 20:23:05,330 - trading.monitoring_dashboard - INFO - 添加告警規則: CPU使用率過高
+2025-09-27 20:23:05,331 - trading.monitoring_dashboard - INFO - 添加告警規則: CPU使用率嚴重
+2025-09-27 20:23:05,331 - trading.monitoring_dashboard - INFO - 添加告警規則: 內存使用率過高
+2025-09-27 20:23:05,331 - trading.monitoring_dashboard - INFO - 添加告警規則: 內存使用率嚴重
+2025-09-27 20:23:05,331 - trading.monitoring_dashboard - INFO - 添加告警規則: 磁盤使用率過高
+2025-09-27 20:23:05,331 - trading.monitoring_dashboard - INFO - 添加告警規則: API響應過慢
+2025-09-27 20:23:05,331 - trading.monitoring_dashboard - INFO - 添加告警規則: 錯誤率過高
+2025-09-27 20:23:05,332 - trading.monitoring_dashboard - INFO - 監控告警儀表板初始化完成
+2025-09-27 20:23:05,645 - trading.chart_generator - INFO - 圖表生成器初始化完成
+2025-09-27 20:23:05,647 - trading.backtest_engine - INFO - 回測引擎初始化完成

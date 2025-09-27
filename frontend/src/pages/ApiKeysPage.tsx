@@ -12,6 +12,7 @@ import {
   XCircle
 } from 'lucide-react'
 import { SxButton } from '@/components/ui/sx-button'
+import { BackBar } from '@/components/ui/BackBar'
 
 interface ApiKey {
   id: string
@@ -47,14 +48,16 @@ export function ApiKeysPage() {
 
   return (
     <div className="space-y-6">
+      <BackBar />
+      
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold text-foreground">API 金鑰管理</h1>
-          <p className="text-muted-foreground">管理您的交易所 API 金鑰和權限</p>
+          <h1 className="text-3xl font-bold text-sx-text">API 金鑰管理</h1>
+          <p className="text-sx-sub">管理您的交易所 API 金鑰和權限</p>
         </div>
         <SxButton 
-          variant="primary" 
+          variant="gold" 
           size="lg"
           leftIcon={<Plus className="h-5 w-5" />}
           onClick={() => setShowAddDialog(true)}
@@ -73,7 +76,7 @@ export function ApiKeysPage() {
               placeholder="搜尋交易所或標籤..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full pl-10 pr-4 py-2 border border-border rounded-lg bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
+              className="w-full pl-10 pr-4 py-2 border border-gray-200 rounded-lg bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
             />
           </div>
         </div>
@@ -83,7 +86,7 @@ export function ApiKeysPage() {
       </div>
 
       {/* API Keys Table */}
-      <div className="bg-card border border-border rounded-2xl overflow-hidden">
+      <div className="sx-card overflow-hidden">
         {filteredKeys.length === 0 ? (
           <div className="text-center py-12">
             <KeyRound className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
@@ -104,7 +107,7 @@ export function ApiKeysPage() {
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full">
-              <thead className="border-b border-border">
+              <thead className="border-b border-gray-200">
                 <tr>
                   <th className="text-left p-4 font-semibold text-foreground">交易所</th>
                   <th className="text-left p-4 font-semibold text-foreground">標籤</th>
@@ -115,7 +118,7 @@ export function ApiKeysPage() {
               </thead>
               <tbody>
                 {filteredKeys.map((key) => (
-                  <tr key={key.id} className="border-b border-border/50 hover:bg-accent/50">
+                  <tr key={key.id} className="border-b border-gray-200/50 hover:bg-accent/50">
                     <td className="p-4">
                       <div className="flex items-center space-x-2">
                         <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center">

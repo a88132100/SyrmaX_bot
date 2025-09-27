@@ -33,7 +33,7 @@ export function SystemPage() {
         {systemStatus.map((service, index) => {
           const Icon = service.icon
           return (
-            <div key={index} className="bg-card border border-border rounded-2xl p-6">
+            <div key={index} className="bg-card border border-gray-200 rounded-2xl p-6">
               <div className="flex items-center space-x-3 mb-4">
                 <div className="p-2 rounded-lg bg-success/10">
                   <Icon className="h-5 w-5 text-success" />
@@ -53,7 +53,7 @@ export function SystemPage() {
       </div>
 
       {/* Logs Section */}
-      <div className="bg-card border border-border rounded-2xl p-6">
+      <div className="bg-card border border-gray-200 rounded-2xl p-6">
         <div className="flex items-center justify-between mb-4">
           <h3 className="text-lg font-semibold text-foreground">系統日誌</h3>
           <SxButton variant="outline" size="sm">

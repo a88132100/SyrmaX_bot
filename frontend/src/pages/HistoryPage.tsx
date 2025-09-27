@@ -20,7 +20,7 @@ export function HistoryPage() {
         </div>
       </div>
 
-      <div className="bg-card border border-border rounded-2xl p-12 text-center">
+      <div className="bg-card border border-gray-200 rounded-2xl p-12 text-center">
         <History className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
         <h3 className="text-lg font-semibold text-foreground mb-2">
           交易記錄功能開發中

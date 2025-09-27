@@ -1,104 +1,99 @@
-import React from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
-import { 
-  LayoutDashboard, 
-  KeyRound, 
-  BarChart3, 
-  Wallet, 
-  History, 
-  Settings2, 
-  Monitor,
-  Menu,
-  X
-} from 'lucide-react'
 import { SxButton } from '@/components/ui/sx-button'
-import { cn } from '@/lib/utils'
+import { Menu, X } from 'lucide-react'
+import { useState } from 'react'
 
-interface SideNavProps {
-  isOpen?: boolean
-  onToggle?: () => void
-  className?: string
-}
-
-const navItems = [
-  { id: 'dashboard', label: '儀表板', icon: LayoutDashboard, path: '/dashboard' },
-  { id: 'api-keys', label: 'API 金鑰', icon: KeyRound, path: '/api-keys' },
-  { id: 'pairs', label: '交易對', icon: BarChart3, path: '/pairs' },
-  { id: 'positions', label: '持倉', icon: Wallet, path: '/positions' },
-  { id: 'history', label: '記錄', icon: History, path: '/history' },
-  { id: 'strategies', label: '策略', icon: Settings2, path: '/strategies' },
-  { id: 'system', label: '系統', icon: Monitor, path: '/system' },
+const items = [
+  { href: "/dashboard", label: "儀表板", icon: "📊" },
+  { href: "/api-keys", label: "API 金鑰", icon: "🔑" },
+  { href: "/pairs", label: "交易對", icon: "📈" },
+  { href: "/positions", label: "持倉", icon: "📥" },
+  { href: "/history", label: "記錄", icon: "🗂️" },
+  { href: "/strategies", label: "策略", icon: "🧪" },
+  { href: "/system", label: "系統", icon: "🖥️" },
 ]
 
-export function SideNav({ isOpen = false, onToggle, className }: SideNavProps) {
+export function SideNav() {
   const location = useLocation()
   const navigate = useNavigate()
+  const [isOpen, setIsOpen] = useState(false)
 
-  const handleNavClick = (path: string) => {
-    navigate(path)
-    onToggle?.()
+  const handleNavClick = (href: string) => {
+    navigate(href)
+    setIsOpen(false)
   }
 
   return (
     <>
-      {/* Mobile overlay */}
-      {isOpen && (
-        <div 
-          className="fixed inset-0 z-40 bg-black/50 lg:hidden"
-          onClick={onToggle}
-        />
-      )}
-
-      {/* Sidebar */}
-      <aside className={cn(
-        "fixed left-0 top-16 z-50 h-[calc(100vh-4rem)] w-64 transform border-r border-border/40 bg-background/95 backdrop-blur transition-transform duration-300 ease-in-out lg:translate-x-0",
-        isOpen ? "translate-x-0" : "-translate-x-full",
-        className
-      )}>
-        <div className="flex h-full flex-col">
-          {/* Mobile close button */}
-          <div className="flex items-center justify-between p-4 lg:hidden">
-            <h2 className="text-lg font-semibold">選單</h2>
-            <SxButton variant="ghost" size="icon" onClick={onToggle}>
-              <X className="h-5 w-5" />
-            </SxButton>
-          </div>
-
-          {/* Navigation items */}
-          <nav className="flex-1 space-y-1 p-4">
-            {navItems.map((item) => {
-              const isActive = location.pathname === item.path
-              const Icon = item.icon
-
-              return (
-                <button
-                  key={item.id}
-                  onClick={() => handleNavClick(item.path)}
-                  className={cn(
-                    "w-full flex items-center space-x-3 rounded-lg px-3 py-2.5 text-left text-sm font-medium transition-colors",
-                    isActive
-                      ? "bg-primary text-primary-foreground"
-                      : "text-muted-foreground hover:bg-accent hover:text-accent-foreground"
-                  )}
-                >
-                  <Icon className="h-5 w-5" />
-                  <span>{item.label}</span>
-                </button>
-              )
-            })}
-          </nav>
-
-          {/* Footer */}
-          <div className="border-t border-border/40 p-4">
-            <div className="text-xs text-muted-foreground">
-              <p>快捷鍵：</p>
-              <p>G + A → API 金鑰</p>
-              <p>G + P → 交易對</p>
-              <p>G + S → 策略</p>
-            </div>
-          </div>
-        </div>
+      {/* 桌機固定側欄 */}
+      <aside className="hidden lg:flex w-72 shrink-0 sticky top-0 h-screen flex-col bg-sx-surface/80 backdrop-blur-md border-r border-sx-border z-30">
+        <div className="p-4 text-sm text-sx-sub">選單</div>
+        <nav className="px-3 space-y-1">
+          {items.map(item => (
+            <button
+              key={item.href}
+              onClick={() => handleNavClick(item.href)}
+              className={`flex items-center gap-3 px-3 h-10 rounded-lg border w-full text-left ${
+                location.pathname === item.href
+                  ? 'border-gold-600/40 bg-gold-600/10 text-gold-400'
+                  : 'border-transparent hover:bg-white/5 text-sx-text'
+              }`}
+            >
+              <span>{item.icon}</span>
+              <span>{item.label}</span>
+            </button>
+          ))}
+        </nav>
       </aside>
+
+      {/* 手機 Drawer：按鈕放在 TopNav */}
+      <div className="lg:hidden">
+        <SxButton 
+          variant="outline" 
+          size="sm" 
+          aria-label="開啟選單" 
+          className="mx-2 mt-2"
+          leftIcon={<Menu size={16} />}
+          onClick={() => setIsOpen(true)}
+        >
+          選單
+        </SxButton>
+
+        {/* 手機版側欄 Drawer */}
+        {isOpen && (
+          <>
+            <div 
+              className="fixed inset-0 z-50 bg-black/50 lg:hidden"
+              onClick={() => setIsOpen(false)}
+            />
+            <aside className="fixed left-0 top-0 z-50 h-screen w-72 bg-sx-surface text-sx-text lg:hidden">
+              <div className="flex items-center justify-between p-4">
+                <div className="text-sm text-sx-sub">選單</div>
+                <SxButton 
+                  variant="ghost" 
+                  size="sm"
+                  onClick={() => setIsOpen(false)}
+                  leftIcon={<X size={16} />}
+                >
+                  關閉
+                </SxButton>
+              </div>
+              <nav className="px-3 space-y-1">
+                {items.map(item => (
+                  <button
+                    key={item.href}
+                    onClick={() => handleNavClick(item.href)}
+                    className="flex items-center gap-3 px-3 h-10 rounded-lg hover:bg-white/5 w-full text-left text-sx-text"
+                  >
+                    <span>{item.icon}</span>
+                    <span>{item.label}</span>
+                  </button>
+                ))}
+              </nav>
+            </aside>
+          </>
+        )}
+      </div>
     </>
   )
 }

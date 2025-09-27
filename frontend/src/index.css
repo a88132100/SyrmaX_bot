@@ -52,11 +52,34 @@
 
 @layer base {
   * {
-    @apply border-border;
+    border-color: rgba(227, 179, 65, .14);
   }
   body {
-    @apply bg-background text-foreground;
+    background: #0A0D12;
+    color: #E7E9EE;
     font-feature-settings: "rlig" 1, "calt" 1;
+  }
+}
+
+@layer components {
+  .sx-card {
+    background: rgba(16, 20, 28, .88);
+    border: 1px solid rgba(227, 179, 65, .14);
+    backdrop-filter: blur(8px);
+    border-radius: 20px;
+  }
+  
+  .sx-card:hover {
+    box-shadow: 0 0 0 1px rgba(227, 179, 65, .28), 0 10px 24px -10px rgba(227, 179, 65, .25);
+  }
+  
+  .sx-gold {
+    background-image: linear-gradient(135deg, #E3B341 0%, #F5C063 60%, #F9D98C 100%);
+    color: #0A0D12;
+  }
+  
+  .sx-mono {
+    font-family: 'IBM Plex Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
   }
 }
 
