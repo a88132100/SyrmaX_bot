@@ -1,14 +1,17 @@
 import React from 'react'
 import { Plus, Upload, Download, BarChart3 } from 'lucide-react'
 import { SxButton } from '@/components/ui/sx-button'
+import { BackBar } from '@/components/ui/BackBar'
 
 export function PairsPage() {
   return (
     <div className="space-y-6">
+      <BackBar />
+      
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold text-foreground">交易對管理</h1>
-          <p className="text-muted-foreground">配置交易對參數和策略模板</p>
+          <h1 className="text-3xl font-bold text-sx-text">交易對管理</h1>
+          <p className="text-sx-sub">配置交易對參數和策略模板</p>
         </div>
         <SxButton 
           variant="primary" 
@@ -19,7 +22,7 @@ export function PairsPage() {
         </SxButton>
       </div>
 
-      <div className="bg-card border border-gray-200 rounded-2xl p-12 text-center">
+      <div className="sx-card p-12 text-center">
         <BarChart3 className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
         <h3 className="text-lg font-semibold text-foreground mb-2">
           交易對管理功能開發中

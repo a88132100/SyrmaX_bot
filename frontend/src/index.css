@@ -64,13 +64,15 @@
 @layer components {
   .sx-card {
     background: rgba(16, 20, 28, .88);
-    border: 1px solid rgba(227, 179, 65, .14);
+    border: 1px solid rgba(227, 179, 65, .18);
     backdrop-filter: blur(8px);
     border-radius: 20px;
+    transition: all 0.2s ease;
   }
   
   .sx-card:hover {
-    box-shadow: 0 0 0 1px rgba(227, 179, 65, .28), 0 10px 24px -10px rgba(227, 179, 65, .25);
+    box-shadow: 0 0 0 1px rgba(227, 179, 65, .35), 0 10px 32px -12px rgba(227, 179, 65, .3);
+    border-color: rgba(227, 179, 65, .25);
   }
   
   .sx-gold {
@@ -80,6 +82,7 @@
   
   .sx-mono {
     font-family: 'IBM Plex Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
+    font-variant-numeric: tabular-nums;
   }
 }
 

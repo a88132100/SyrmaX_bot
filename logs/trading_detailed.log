@@ -6579,3 +6579,15 @@ KeyError: "Key 'description' not found in 'CurrentTraderConfigForm'. Choices are
 2025-09-27 20:23:05,332 - trading.monitoring_dashboard - INFO - 監控告警儀表板初始化完成
 2025-09-27 20:23:05,645 - trading.chart_generator - INFO - 圖表生成器初始化完成
 2025-09-27 20:23:05,647 - trading.backtest_engine - INFO - 回測引擎初始化完成
+2025-10-01 17:40:40,988 - trading.trade_logger - INFO - 交易日誌記錄器初始化完成
+2025-10-01 17:40:41,022 - trading.system_monitor - INFO - 系統監控器初始化完成
+2025-10-01 17:40:41,025 - trading.monitoring_dashboard - INFO - 添加告警規則: CPU使用率過高
+2025-10-01 17:40:41,025 - trading.monitoring_dashboard - INFO - 添加告警規則: CPU使用率嚴重
+2025-10-01 17:40:41,025 - trading.monitoring_dashboard - INFO - 添加告警規則: 內存使用率過高
+2025-10-01 17:40:41,025 - trading.monitoring_dashboard - INFO - 添加告警規則: 內存使用率嚴重
+2025-10-01 17:40:41,025 - trading.monitoring_dashboard - INFO - 添加告警規則: 磁盤使用率過高
+2025-10-01 17:40:41,025 - trading.monitoring_dashboard - INFO - 添加告警規則: API響應過慢
+2025-10-01 17:40:41,025 - trading.monitoring_dashboard - INFO - 添加告警規則: 錯誤率過高
+2025-10-01 17:40:41,025 - trading.monitoring_dashboard - INFO - 監控告警儀表板初始化完成
+2025-10-01 17:40:41,737 - trading.chart_generator - INFO - 圖表生成器初始化完成
+2025-10-01 17:40:41,738 - trading.backtest_engine - INFO - 回測引擎初始化完成

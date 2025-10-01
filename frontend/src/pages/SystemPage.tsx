@@ -1,6 +1,7 @@
 import React from 'react'
 import { RefreshCw, Download, Monitor, Activity, Database, Wifi } from 'lucide-react'
 import { SxButton } from '@/components/ui/sx-button'
+import { BackBar } from '@/components/ui/BackBar'
 
 const systemStatus = [
   { name: '撮合服務', status: '良好', latency: '12ms', icon: Activity },
@@ -13,10 +14,12 @@ const systemStatus = [
 export function SystemPage() {
   return (
     <div className="space-y-6">
+      <BackBar />
+      
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold text-foreground">系統監控</h1>
-          <p className="text-muted-foreground">監控系統運行狀態和性能指標</p>
+          <h1 className="text-3xl font-bold text-sx-text">系統監控</h1>
+          <p className="text-sx-sub">監控系統運行狀態和性能指標</p>
         </div>
         <div className="flex space-x-2">
           <SxButton variant="outline" leftIcon={<RefreshCw className="h-4 w-4" />}>

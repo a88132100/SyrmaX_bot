@@ -1,14 +1,17 @@
 import React from 'react'
 import { FileSpreadsheet, ShieldCheck, History } from 'lucide-react'
 import { SxButton } from '@/components/ui/sx-button'
+import { BackBar } from '@/components/ui/BackBar'
 
 export function HistoryPage() {
   return (
     <div className="space-y-6">
+      <BackBar />
+      
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold text-foreground">交易記錄</h1>
-          <p className="text-muted-foreground">查看歷史交易記錄和分析</p>
+          <h1 className="text-3xl font-bold text-sx-text">交易記錄</h1>
+          <p className="text-sx-sub">查看歷史交易記錄和分析</p>
         </div>
         <div className="flex space-x-2">
           <SxButton variant="outline" leftIcon={<FileSpreadsheet className="h-4 w-4" />}>

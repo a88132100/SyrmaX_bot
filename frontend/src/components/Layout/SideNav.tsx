@@ -26,7 +26,7 @@ export function SideNav() {
   return (
     <>
       {/* 桌機固定側欄 */}
-      <aside className="hidden lg:flex w-72 shrink-0 sticky top-0 h-screen flex-col bg-sx-surface/80 backdrop-blur-md border-r border-sx-border z-30">
+      <aside className="hidden lg:flex w-72 shrink-0 sticky top-0 h-screen flex-col bg-sx-surface/80 backdrop-blur-md border-r border-sx-border z-30 overflow-y-auto">
         <div className="p-4 text-sm text-sx-sub">選單</div>
         <nav className="px-3 space-y-1">
           {items.map(item => (
@@ -63,10 +63,10 @@ export function SideNav() {
         {isOpen && (
           <>
             <div 
-              className="fixed inset-0 z-50 bg-black/50 lg:hidden"
+              className="fixed inset-0 z-50 bg-black/60 lg:hidden"
               onClick={() => setIsOpen(false)}
             />
-            <aside className="fixed left-0 top-0 z-50 h-screen w-72 bg-sx-surface text-sx-text lg:hidden">
+            <aside className="fixed left-0 top-0 z-[60] h-screen w-72 bg-sx-surface text-sx-text lg:hidden overflow-y-auto">
               <div className="flex items-center justify-between p-4">
                 <div className="text-sm text-sx-sub">選單</div>
                 <SxButton 

@@ -1,12 +1,14 @@
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useLocation } from 'react-router-dom'
 import { ArrowLeft } from 'lucide-react'
 import { SxButton } from '@/components/ui/sx-button'
 
 export function BackBar({ fallback = "/dashboard" }: { fallback?: string }) {
   const navigate = useNavigate()
+  const location = useLocation()
 
   const handleBack = () => {
-    if (window.history.length > 1) {
+    // 避免跳到舊版 UI，優先返回 dashboard
+    if (location.key !== "default" && window.history.length > 2) {
       navigate(-1)
     } else {
       navigate(fallback)

@@ -1,14 +1,17 @@
 import React from 'react'
 import { Pause, Power, RefreshCw, Wallet, Trash2 } from 'lucide-react'
 import { SxButton } from '@/components/ui/sx-button'
+import { BackBar } from '@/components/ui/BackBar'
 
 export function PositionsPage() {
   return (
     <div className="space-y-6">
+      <BackBar />
+      
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold text-foreground">持倉監控</h1>
-          <p className="text-muted-foreground">實時監控持倉狀況和風險控制</p>
+          <h1 className="text-3xl font-bold text-sx-text">持倉監控</h1>
+          <p className="text-sx-sub">實時監控持倉狀況和風險控制</p>
         </div>
         <div className="flex space-x-2">
           <SxButton variant="warning" leftIcon={<Pause className="h-4 w-4" />}>

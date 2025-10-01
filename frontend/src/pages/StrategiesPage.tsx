@@ -1,14 +1,17 @@
 import React from 'react'
 import { Plus, TestTube, FilePlus, Settings2, Play, Pause } from 'lucide-react'
 import { SxButton } from '@/components/ui/sx-button'
+import { BackBar } from '@/components/ui/BackBar'
 
 export function StrategiesPage() {
   return (
     <div className="space-y-6">
+      <BackBar />
+      
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold text-foreground">策略配置</h1>
-          <p className="text-muted-foreground">設置交易策略參數和回測</p>
+          <h1 className="text-3xl font-bold text-sx-text">策略配置</h1>
+          <p className="text-sx-sub">設置交易策略參數和回測</p>
         </div>
         <div className="flex space-x-2">
           <SxButton variant="outline" leftIcon={<TestTube className="h-4 w-4" />}>

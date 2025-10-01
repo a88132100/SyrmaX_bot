@@ -6,6 +6,7 @@ import {
 } from 'lucide-react'
 import { StatCard } from '@/components/ui/StatCard'
 import { QuickActions } from '@/components/dashboard/QuickActions'
+import { BotControl } from '@/components/bot/BotControl'
 
 const kpiData = [
   {
@@ -64,6 +65,9 @@ export function DashboardPage() {
           />
         ))}
       </div>
+
+      {/* Bot Control */}
+      <BotControl />
 
       {/* Quick Actions */}
       <QuickActions />
