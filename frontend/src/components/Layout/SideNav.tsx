@@ -13,14 +13,18 @@ const items = [
   { href: "/system", label: "系統", icon: "🖥️" },
 ]
 
-export function SideNav() {
+interface SideNavProps {
+  isOpen?: boolean
+  onToggle?: () => void
+}
+
+export function SideNav({ isOpen = false, onToggle }: SideNavProps = {}) {
   const location = useLocation()
   const navigate = useNavigate()
-  const [isOpen, setIsOpen] = useState(false)
 
   const handleNavClick = (href: string) => {
     navigate(href)
-    setIsOpen(false)
+    onToggle?.()
   }
 
   return (
@@ -46,54 +50,40 @@ export function SideNav() {
         </nav>
       </aside>
 
-      {/* 手機 Drawer：按鈕放在 TopNav */}
-      <div className="lg:hidden">
-        <SxButton 
-          variant="outline" 
-          size="sm" 
-          aria-label="開啟選單" 
-          className="mx-2 mt-2"
-          leftIcon={<Menu size={16} />}
-          onClick={() => setIsOpen(true)}
-        >
-          選單
-        </SxButton>
-
-        {/* 手機版側欄 Drawer */}
-        {isOpen && (
-          <>
-            <div 
-              className="fixed inset-0 z-50 bg-black/60 lg:hidden"
-              onClick={() => setIsOpen(false)}
-            />
-            <aside className="fixed left-0 top-0 z-[60] h-screen w-72 bg-sx-surface text-sx-text lg:hidden overflow-y-auto">
-              <div className="flex items-center justify-between p-4">
-                <div className="text-sm text-sx-sub">選單</div>
-                <SxButton 
-                  variant="ghost" 
-                  size="sm"
-                  onClick={() => setIsOpen(false)}
-                  leftIcon={<X size={16} />}
+      {/* 手機版側欄 Drawer */}
+      {isOpen && (
+        <>
+          <div 
+            className="fixed inset-0 z-50 bg-black/60 lg:hidden"
+            onClick={onToggle}
+          />
+          <aside className="fixed left-0 top-0 z-[60] h-screen w-72 bg-sx-surface text-sx-text lg:hidden overflow-y-auto">
+            <div className="flex items-center justify-between p-4">
+              <div className="text-sm text-sx-sub">選單</div>
+              <SxButton 
+                variant="ghost" 
+                size="sm"
+                onClick={onToggle}
+                leftIcon={<X size={16} />}
+              >
+                關閉
+              </SxButton>
+            </div>
+            <nav className="px-3 space-y-1">
+              {items.map(item => (
+                <button
+                  key={item.href}
+                  onClick={() => handleNavClick(item.href)}
+                  className="flex items-center gap-3 px-3 h-10 rounded-lg hover:bg-white/5 w-full text-left text-sx-text"
                 >
-                  關閉
-                </SxButton>
-              </div>
-              <nav className="px-3 space-y-1">
-                {items.map(item => (
-                  <button
-                    key={item.href}
-                    onClick={() => handleNavClick(item.href)}
-                    className="flex items-center gap-3 px-3 h-10 rounded-lg hover:bg-white/5 w-full text-left text-sx-text"
-                  >
-                    <span>{item.icon}</span>
-                    <span>{item.label}</span>
-                  </button>
-                ))}
-              </nav>
-            </aside>
-          </>
-        )}
-      </div>
+                  <span>{item.icon}</span>
+                  <span>{item.label}</span>
+                </button>
+              ))}
+            </nav>
+          </aside>
+        </>
+      )}
     </>
   )
 }
