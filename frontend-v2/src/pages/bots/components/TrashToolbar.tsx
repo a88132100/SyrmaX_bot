@@ -1,14 +1,22 @@
 import React from 'react'
-import { Globe, ChevronDown, Circle, Package } from 'lucide-react'
+import { Globe, ChevronDown, Package } from 'lucide-react'
 import { Dropdown, DropdownItem } from '@/components/ui/Dropdown'
 import { cn } from '@/lib/utils'
+
+type StrategyStyleKey = 'all' | 'aggressive' | 'balanced' | 'conservative'
+
+const STRATEGY_STYLE_FILTERS: { key: StrategyStyleKey; label: string }[] = [
+  { key: 'all', label: '所有策略風格' },
+  { key: 'aggressive', label: '激進型' },
+  { key: 'balanced', label: '平衡型' },
+  { key: 'conservative', label: '保守型' },
+]
 
 interface TrashToolbarProps {
   exchange?: string
   onExchange: (v?: string) => void
-  strategy?: string
-  onStrategy: (v?: string) => void
-  availableStrategies?: string[] // 可用的策略包列表（可選，用於動態生成選項）
+  selectedStyle: StrategyStyleKey
+  onStyleChange: (style: StrategyStyleKey) => void
 }
 
 // 交易所 Icon 組件 - 實心色塊，使用品牌色
@@ -68,30 +76,18 @@ const EXCHANGE_OPTIONS: ExchangeOption[] = [
 export function TrashToolbar({
   exchange,
   onExchange,
-  strategy,
-  onStrategy,
-  availableStrategies = ['趨勢跟隨策略包', '網格交易策略包', '防守型策略包'], // 預設策略包選項
+  selectedStyle,
+  onStyleChange,
 }: TrashToolbarProps) {
   // 取得當前選中的交易所選項
   const selectedExchange = EXCHANGE_OPTIONS.find(x => x.id === (exchange || 'all')) ?? EXCHANGE_OPTIONS[0]
   const SelectedExchangeIcon = selectedExchange.icon
 
-  // 取得策略包顯示文字
-  const getStrategyLabel = () => {
-    return strategy || '所有策略包'
-  }
-
-  // 策略包選項配置
-  const strategyOptions = [
-    { id: 'all', label: '所有策略包', icon: Package },
-    ...availableStrategies.map((s) => ({ id: s, label: s, icon: Circle })),
-  ]
-
-  const selectedStrategy = strategyOptions.find(x => x.id === (strategy || 'all')) ?? strategyOptions[0]
-  const SelectedStrategyIcon = selectedStrategy.icon
+  // 取得當前選中的策略風格選項
+  const selectedStyleOption = STRATEGY_STYLE_FILTERS.find(f => f.key === selectedStyle) ?? STRATEGY_STYLE_FILTERS[0]
 
   return (
-    <div className="flex items-center gap-2">
+    <div className="flex items-center gap-4">
       {/* 交易所篩選 chip */}
       <Dropdown
         trigger={
@@ -131,7 +127,7 @@ export function TrashToolbar({
         })}
       </Dropdown>
 
-      {/* 策略包篩選 chip */}
+      {/* 策略風格篩選 chip */}
       <Dropdown
         trigger={
           <button
@@ -141,30 +137,36 @@ export function TrashToolbar({
             className="inline-flex items-center gap-2 rounded-full border border-border bg-transparent px-3 py-1.5 text-sm text-text-primary hover:border-border/80 hover:bg-background-tertiary cursor-pointer transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/50"
           >
             <span className="w-4 h-4 flex items-center justify-center flex-shrink-0">
-              {SelectedStrategyIcon && <SelectedStrategyIcon className="h-4 w-4 text-text-secondary" />}
+              <Package className="h-4 w-4 text-text-secondary" />
             </span>
-            <span className="whitespace-nowrap">{selectedStrategy.label}</span>
+            <span className="whitespace-nowrap">{selectedStyleOption.label}</span>
             <ChevronDown className="w-4 h-4 ml-1 flex-shrink-0 opacity-70" />
           </button>
         }
         align="left"
       >
-        {strategyOptions.map((option) => {
-          const OptionIcon = option.icon
-          const isSelected = option.id === (strategy || 'all')
+        {STRATEGY_STYLE_FILTERS.map((filter) => {
+          const isSelected = filter.key === selectedStyle
           return (
             <DropdownItem 
-              key={option.id} 
-              onClick={() => onStrategy(option.id === 'all' ? undefined : option.id)}
+              key={filter.key} 
+              onClick={() => onStyleChange(filter.key)}
               className={cn(
                 "flex items-center gap-2",
                 isSelected && "bg-background-tertiary"
               )}
             >
               <span className="w-4 h-4 flex items-center justify-center flex-shrink-0">
-                {OptionIcon && <OptionIcon className="h-4 w-4 text-text-secondary" />}
+                <span className={cn(
+                  "h-3 w-3 rounded-full border border-border/60 flex items-center justify-center",
+                  isSelected && "bg-emerald-400 border-emerald-400"
+                )}>
+                  {isSelected && (
+                    <span className="h-2 w-2 rounded-full bg-white" />
+                  )}
+                </span>
               </span>
-              <span>{option.label}</span>
+              <span>{filter.label}</span>
             </DropdownItem>
           )
         })}

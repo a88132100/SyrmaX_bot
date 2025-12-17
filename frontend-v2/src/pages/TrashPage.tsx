@@ -9,8 +9,20 @@ import { Pager } from '@/components/ui/Pager'
 import { Toast } from '@/components/ui/Toast'
 import { PurgeBotDialog } from '@/components/bot/PurgeBotDialog'
 import type { Bot } from '@/lib/mockStore'
+import { loadTrashBots, restoreBots, purgeBots, loadBots } from '@/lib/botsStorage'
+import { STRATEGY_BUNDLES } from '@/components/strategies/strategyBundles'
+import type { StrategyBundleTemplate } from '@/components/strategies/types'
 
 type Sort = { field: 'deletedAt' | 'name'; dir: 'asc' | 'desc' } | null
+
+type StrategyStyleKey = 'all' | 'aggressive' | 'balanced' | 'conservative'
+
+const STRATEGY_STYLE_FILTERS: { key: StrategyStyleKey; label: string }[] = [
+  { key: 'all', label: '所有策略風格' },
+  { key: 'aggressive', label: '激進型' },
+  { key: 'balanced', label: '平衡型' },
+  { key: 'conservative', label: '保守型' },
+]
 
 /**
  * 回收桶頁面
@@ -27,7 +39,7 @@ export default function TrashPage() {
   const [pageSize, setPageSize] = useState(20)
   const [query, setQuery] = useState('')
   const [exchange, setExchange] = useState<string | undefined>(undefined)
-  const [strategy, setStrategy] = useState<string | undefined>(undefined)
+  const [selectedStyle, setSelectedStyle] = useState<StrategyStyleKey>('all')
   // 預設排序：刪除時間降序（最新刪除在最上面）
   const [sort, setSort] = useState<Sort>({ field: 'deletedAt', dir: 'desc' })
   // 儲存所有符合條件的資料（不包含排序和分頁）
@@ -41,17 +53,17 @@ export default function TrashPage() {
   const [purgeDialogOpen, setPurgeDialogOpen] = useState(false)
   const [botToPurge, setBotToPurge] = useState<Bot | null>(null)
 
-  // 組合查詢參數
+  // 組合查詢參數（保留以向後相容，但實際上不再使用 strategy 欄位）
   const params = useMemo<ListTrashParams>(
     () => ({
       page,
       size: pageSize,
       query,
       exchange,
-      strategy,
+      strategy: undefined, // 不再使用策略包篩選
       sort: sort ?? undefined, // 將 null 轉為 undefined
     }),
-    [page, pageSize, query, exchange, strategy, sort]
+    [page, pageSize, query, exchange, sort]
   )
 
   // 載入資料（不包含排序和分頁，這些在客戶端處理）
@@ -60,26 +72,58 @@ export default function TrashPage() {
     setLoading(true)
     setError(null)
     try {
-      // 使用最新的參數重新載入（不包含 sort，因為排序在客戶端處理）
-      // 使用一個很大的 pageSize 來取得所有符合條件的資料
-      const currentParams: ListTrashParams = {
-        page: 1,
-        size: 10000, // 足夠大的數字以取得所有項目
-        query,
-        exchange,
-        strategy,
-        // 不傳入 sort，讓客戶端處理排序
-      }
-      console.log('載入參數:', currentParams)
-      
       // 先等待一小段時間確保 loading 狀態可見
       await new Promise(resolve => setTimeout(resolve, 100))
       
-      const result = await mockStore.listTrash(currentParams)
+      // 從 localStorage 載入已刪除的機器人
+      let items = loadTrashBots()
+      
+      // 關鍵字搜尋
+      if (query) {
+        const q = query.toLowerCase()
+        items = items.filter(b =>
+          b.name.toLowerCase().includes(q) ||
+          b.symbol.toLowerCase().includes(q) ||
+          (b.strategyPackName || '').toLowerCase().includes(q)
+        )
+      }
+      
+      // 交易所篩選
+      if (exchange) {
+        items = items.filter(b => b.exchange === exchange)
+      }
+      
+      // 策略風格篩選
+      if (selectedStyle !== 'all') {
+        items = items.filter((bot) => {
+          // 1. 若 bot 本身就有 strategyStyle 欄位，直接用
+          // 注意：目前 Bot 類型沒有 strategyStyle，所以會走下面的邏輯
+          if ((bot as any).strategyStyle) {
+            return (bot as any).strategyStyle === selectedStyle
+          }
+
+          // 2. 舊資料：沒有 strategyStyle，就根據 strategyPackId 去反查風格
+          if (!bot.strategyPackId) {
+            // 沒有任何資訊的舊 DEMO 機器人：只在「所有策略風格」下出現
+            return false
+          }
+
+          const bundle: StrategyBundleTemplate | undefined = STRATEGY_BUNDLES.find(
+            (b) => b.id === bot.strategyPackId
+          )
+
+          if (!bundle || !bundle.style) {
+            return false
+          }
+
+          return bundle.style === selectedStyle
+        })
+      }
+      
       // 儲存所有符合條件的資料（不包含排序和分頁）
-      setAllRows(result.items)
-      setTotal(result.total)
-      console.log('載入完成，共', result.total, '筆')
+      setAllRows(items)
+      setTotal(items.length)
+      console.log('載入完成，共', items.length, '筆')
       
       // 如果是手動重新整理，顯示成功 toast
       if (showSuccessToast) {
@@ -102,7 +146,7 @@ export default function TrashPage() {
   useEffect(() => {
     fetchData()
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [query, exchange, strategy])
+  }, [query, exchange, selectedStyle])
 
   // 客戶端排序和分頁處理
   const rows = useMemo(() => {
@@ -140,10 +184,14 @@ export default function TrashPage() {
       const bot = rows.find(r => r.id === id)
       const botName = bot?.name || '機器人'
       
-      await mockStore.restoreBots([id])
+      // 使用 botsStorage 還原機器人
+      restoreBots([id])
+      
       // 重新載入列表
       await fetchData()
-      // 回收桶計數會透過訂閱機制自動更新（restoreBots 會觸發 _notifyBotsChanged）
+      // 通知 mockStore 更新（觸發訂閱機制）
+      mockStore._notifyBotsChanged()
+      
       setToast({ 
         message: `已還原 1 個機器人「${botName}」`, 
         type: 'success' 
@@ -171,11 +219,15 @@ export default function TrashPage() {
     if (!botToPurge) return
     
     try {
-      await mockStore.purgeBots([botToPurge.id])
+      // 使用 botsStorage 永久刪除機器人
+      purgeBots([botToPurge.id])
+      
       const botName = botToPurge.name
       // 重新載入列表
       await fetchData()
-      // 回收桶計數會透過訂閱機制自動更新（purgeBots 會觸發 _notifyBotsChanged）
+      // 通知 mockStore 更新（觸發訂閱機制）
+      mockStore._notifyBotsChanged()
+      
       setToast({ 
         message: `已永久刪除 1 個機器人「${botName}」`, 
         type: 'success' 
@@ -194,12 +246,13 @@ export default function TrashPage() {
   // 當 pageSize 改變時，重置到第一頁
   useEffect(() => {
     setPage(1)
-  }, [pageSize, query, exchange, strategy])
+  }, [pageSize, query, exchange, selectedStyle])
   
   // 當排序改變時，重置到第一頁（因為排序會改變資料順序）
   useEffect(() => {
     setPage(1)
   }, [sort])
+
 
   return (
     <div className="p-6">
@@ -235,8 +288,8 @@ export default function TrashPage() {
           <TrashToolbar
             exchange={exchange}
             onExchange={setExchange}
-            strategy={strategy}
-            onStrategy={setStrategy}
+            selectedStyle={selectedStyle}
+            onStyleChange={setSelectedStyle}
           />
           <Button
             variant="ghost"

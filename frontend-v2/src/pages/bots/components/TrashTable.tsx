@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom'
 import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
 import type { Bot } from '@/lib/mockStore'
+import { getNeutralBadgeStyle } from '@/lib/subtleBadgeStyles'
 
 interface TrashTableProps {
   loading: boolean
@@ -238,8 +239,14 @@ export function TrashTable({
                       {r.symbol} · {r.exchange}
                     </div>
                   </td>
-                  <td className="px-4 py-3 text-text-secondary">
-                    {r.strategyPackName ?? '-'}
+                  <td className="px-4 py-3">
+                    {r.strategyPackName ? (
+                      <span style={getNeutralBadgeStyle()}>
+                        {r.strategyPackName}
+                      </span>
+                    ) : (
+                      <span className="text-text-secondary">-</span>
+                    )}
                   </td>
                   <td className="px-4 py-3">
                     <span className="font-mono text-text-secondary text-xs">
